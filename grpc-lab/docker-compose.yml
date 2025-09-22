@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  java-rest-service:
+    build: ./rest-api-lab
+    ports:
+      - "8080:8080"
+
+  java-grpc-service:
+    build: ./grpc-lab
+    ports:
+      - "50051:50051"
