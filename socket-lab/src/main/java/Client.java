@@ -12,6 +12,10 @@ public class Client {
     private static final int SERVER_PORT = 8080;
 
     public static void main(String[] args) {
+        start();
+    }
+
+    public static void start() {
         try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
              BufferedReader in = new BufferedReader(
                      new InputStreamReader(socket.getInputStream()));

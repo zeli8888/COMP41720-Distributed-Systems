@@ -8,19 +8,57 @@
 // - Close connection
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Server {
-    public static void main(String[] args) {
-        try (ServerSocket serverSocket = new ServerSocket(8080)) {
-            System.out.println("Server started on port 8080");
+    private static ServerSocket serverSocket;
+    private static final AtomicBoolean isRunning = new AtomicBoolean(false);
+    private static Thread serverThread;
 
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                // Create new thread for each client connection
-                new ClientHandler(clientSocket).start();
+    public static void main(String[] args) {
+        start();
+    }
+
+    public static void start() {
+        if (isRunning.get()) return;
+
+        isRunning.set(true);
+        serverThread = new Thread(() -> {
+            try (ServerSocket ss = new ServerSocket(8080)) {
+                serverSocket = ss;
+                System.out.println("Server started on port 8080");
+
+                while (isRunning.get()) {
+                    try {
+                        Socket clientSocket = serverSocket.accept();
+                        new ClientHandler(clientSocket).start();
+                    } catch (SocketException e) {
+                        if (!isRunning.get()) {
+                            System.out.println("Server stopped normally");
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                if (isRunning.get()) {
+                    System.err.println("Server exception: " + e.getMessage());
+                }
+            } finally {
+                isRunning.set(false);
+            }
+        });
+        serverThread.start();
+    }
+
+    public static void stop() {
+        if (!isRunning.get()) return;
+
+        isRunning.set(false);
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
             }
         } catch (IOException e) {
-            System.err.println("Server exception: " + e.getMessage());
+            System.err.println("Error closing server: " + e.getMessage());
         }
     }
 
@@ -43,7 +81,7 @@ public class Server {
                 // Continuously read client requests
                 String request;
                 while ((request = in.readLine()) != null) {
-                    if (request.isEmpty()) {
+                    if (request.isEmpty() || "exit".equalsIgnoreCase(request.trim())) {
                         break;
                     }
                     System.out.println("Received request: " + request);
