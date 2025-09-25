@@ -1,5 +1,0 @@
-FROM eclipse-temurin:17-jdk-jammy
-ARG JAR_FILE
-WORKDIR /app
-COPY target/socket-lab-1.0-SNAPSHOT-${JAR_FILE}.jar /app/app.jar
-CMD ["java", "-jar", "app.jar"]

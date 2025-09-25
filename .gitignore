@@ -46,4 +46,4 @@ mvnw
 mvnw.cmd
 
 ### temporary files ###
-*.java~
+*~
