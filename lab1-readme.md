@@ -6,7 +6,7 @@
 
 #### You can run them one by one following corresponding readme file, or run docker-compose.yml here
 ```bash
-docker-compose -p zeli-lab1 -f lab1-docker-compose.yml up -d --build
+docker compose -p zeli-lab1 -f lab1-docker-compose.yml up -d --build
 ```
 
 #### To run socket-lab client:
