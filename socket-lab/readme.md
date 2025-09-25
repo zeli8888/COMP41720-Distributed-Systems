@@ -60,7 +60,7 @@ The system enforces synchronous communication through:
 
 #### AtomicBoolean for State Management
  - Why: Thread-safe flag to coordinate server shutdown across threads.
-
+---
 ## Getting Started
 ### Run Test & Build:
 
@@ -88,16 +88,22 @@ docker run -d -p 8080:8080 -e APP=server --name socket-lab-server socket-lab
 ```bash
 docker run -it -e APP=client --rm --network="host" socket-lab
 ```
-Or use my docker image: 
-```bash
-docker pull zeli8888/socket-lab
-docker run -d -p 8080:8080 -e APP=server --name socket-lab zeli8888/socket-lab
-docker run -it -e APP=client --rm --network="host" zeli8888/socket-lab-client
-```
+
+[//]: # (Or use my docker image: )
+
+[//]: # (```bash)
+
+[//]: # (docker pull zeli8888/socket-lab)
+
+[//]: # (docker run -d -p 8080:8080 -e APP=server --name socket-lab zeli8888/socket-lab)
+
+[//]: # (docker run -it -e APP=client --rm --network="host" zeli8888/socket-lab-client)
+
+[//]: # (```)
 
 4. Clean Up:
 ```bash
 docker stop socket-lab-server
 docker rm socket-lab-server
-docker rmi socket-lab zeli8888/socket-lab
+docker rmi socket-lab
 ```
