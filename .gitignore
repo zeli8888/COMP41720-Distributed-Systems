@@ -44,3 +44,6 @@ build/
 .mvn
 mvnw
 mvnw.cmd
+
+### temporary files ###
+*.java~
