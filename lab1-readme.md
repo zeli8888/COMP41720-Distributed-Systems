@@ -10,6 +10,11 @@ mvn clean test package
 docker compose -p zeli-lab1 -f lab1-docker-compose.yml up -d --build
 ```
 
+If anything goes wrong (mvn test package failed caused by different OS, mine is Windows), you can try my built images
+```bash
+docker compose -p zeli-lab1 -f lab1-docker-compose-zeli8888.yml up -d
+```
+
 #### To run socket-lab client:
 ```bash
 docker run -it -e APP=client --rm --network="host" socket-lab

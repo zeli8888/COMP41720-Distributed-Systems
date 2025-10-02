@@ -1,0 +1,20 @@
+services:
+  socket-lab:
+    image: zeli8888/socket-lab
+    container_name: socket-lab
+    environment:
+      - APP=server
+    ports:
+      - "8080:8080"
+
+  rest-api-lab:
+    image: zeli8888/rest-api-lab
+    container_name: rest-api-lab
+    ports:
+      - "8081:8081"
+
+  grpc-lab:
+    image: zeli8888/grpc-lab
+    container_name: grpc-lab
+    ports:
+      - "50051:50051"
