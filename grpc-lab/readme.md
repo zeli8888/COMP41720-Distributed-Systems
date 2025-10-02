@@ -113,7 +113,7 @@ docker build -t grpc-lab .
 docker run -d -p 50051:50051 -e RUN_MODE=server --name grpc-lab-server grpc-lab
 ```
 
-3. Run Client Container:
+3. Run Client Container (contains restful and grpc benchmark test option):
 ```bash
 docker run -it --rm -e RUN_MODE=client --network="host" grpc-lab
 ```
@@ -128,7 +128,7 @@ docker run -it --rm -e RUN_MODE=client --network="host" grpc-lab
 
 [//]: # (```)
 
-3. Clean Up:
+4. Clean Up:
 ```bash
 docker stop grpc-lab-server
 docker rm grpc-lab-server
