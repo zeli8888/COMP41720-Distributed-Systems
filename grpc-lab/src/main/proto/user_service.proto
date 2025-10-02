@@ -1,11 +1,12 @@
 syntax = "proto3";
-option java_package = "com.example";
+option java_package = "com.example.grpc";
 option java_outer_classname = "UserServiceProto";
 service UserService {
   rpc GetUser (UserRequest) returns (User);
   rpc CreateUser (CreateUserRequest) returns (User);
   rpc UpdateUser (UpdateUserRequest) returns (User);
   rpc DeleteUser (UserRequest) returns (Empty);
+  rpc ListUsers (Empty) returns (UserList);
 }
 message UserRequest {
   string id = 1;
@@ -23,5 +24,8 @@ message User {
   string id = 1;
   string name = 2;
   string email = 3;
+}
+message UserList {
+  repeated User users = 1;
 }
 message Empty {}

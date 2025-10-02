@@ -15,9 +15,9 @@ services:
     ports:
       - "8081:8081"
 
-#  grpc-lab:
-#    build: ./grpc-lab
-#    image: grpc-lab
-#    container_name: grpc-lab
-#    ports:
-#      - "50051:50051"
+  grpc-lab:
+    build: ./grpc-lab
+    image: grpc-lab
+    container_name: grpc-lab
+    ports:
+      - "50051:50051"

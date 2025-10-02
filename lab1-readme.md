@@ -1,10 +1,10 @@
-#### Check three applications
+#### Check three applications, detailed documentation can be found in each readme file
 - socket-lab
 - rest-api-lab
 - grpc-lab
-#### Detailed documentation can be found in each readme file
 
-#### You can run them one by one following corresponding readme file, or run docker-compose.yml here
+#### You can run them through docker-compose.yml here (Highly recommended!)
+#### or you can run them one by one from corresponding readme file
 ```bash
 docker compose -p zeli-lab1 -f lab1-docker-compose.yml up -d --build
 ```
@@ -12,6 +12,11 @@ docker compose -p zeli-lab1 -f lab1-docker-compose.yml up -d --build
 #### To run socket-lab client:
 ```bash
 docker run -it -e APP=client --rm --network="host" socket-lab
+```
+
+#### To run grpc-lab client:
+```bash
+docker run -it --rm -e RUN_MODE=client --network="host" grpc-lab
 ```
 
 #### To clean up

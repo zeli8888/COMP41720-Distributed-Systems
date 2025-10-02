@@ -42,16 +42,16 @@ For example:
 |--------------------------|------------|----------------------------------------------|--------------------|------------------------------------------|  
 | `/api/users`             | `GET`      | Fetch all users                              | `200 OK`           | N/A                                      |  
 | `/api/users/{id}`        | `GET`      | Fetch user by ID                             | `200 OK`           | `404 Not Found`                          |  
-| `/api/users`             | `POST`     | Create a user                                | `201 Created`      | `400 Bad Request`, `409 Conflict`       |  
+| `/api/users`             | `POST`     | Create a user                                | `201 Created`      | `400 Bad Request`       |  
 | `/api/users/{id}`        | `PUT`      | Update a user                                | `200 OK`           | `400 Bad Request`, `404 Not Found`       |  
 | `/api/users/{id}`        | `DELETE`   | Delete a user                                | `204 No Content`   | `404 Not Found`                          |  "
 
 ### Data Model
 ```bash
 public class User {  
-    private String id;          // Unique identifier (UUID)  
-    private String firstName;   // Required field  
-    private String lastName;    // Required field  
+    private String id;          // Unique identifier 
+    private String name;   // Required field, allow deplicate name
+    private String email;    // Required field, allow deplicate email (we allow users to register multiple accounts with same email)
 }  
 ```
 ---
