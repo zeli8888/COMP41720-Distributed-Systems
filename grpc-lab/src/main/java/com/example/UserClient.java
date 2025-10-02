@@ -390,6 +390,11 @@ public class UserClient {
             System.out.println("🚀 gRPC shows better performance!");
         } else {
             System.out.println("⚠️  REST API shows better performance!");
+            System.out.println("We have verified that both gRPC and restful api have same business service logic (h2 database + spring data jpa).");
+            System.out.println("The reason REST API is faster could be:");
+            System.out.println("1. Continuous Synchronous Call is not conducive to grpc");
+            System.out.println("2. Protobuf has higher cost in simple data object transmission");
+            System.out.println("3. gRPC framework has higher cost in abstract layer");
         }
     }
 
