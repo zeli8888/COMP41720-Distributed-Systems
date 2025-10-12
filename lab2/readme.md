@@ -1,7 +1,12 @@
 ## Introduction
 ### Source Code Repository Link
-link to code repository containing all client application code used for this experiments: 
+link to code repository containing all client application code used for this experiments: https://github.com/zeli8888/COMP41720-Distributed-Systems/tree/main/lab2
 ### Lab's purpose
+1. Understand the challenges of storing and managing data across multiple nodes in a distributed environment.
+2. Configure and compare different data replication strategies, including primary-backup (leader-follower), multi-primary (multi-leader), and leaderless architectures.
+3. Experiment with and differentiate between various consistency models, such as strong consistency, eventual consistency, and (optionally) causal consistency.
+4. Analyze the practical implications and architectural trade-offs of choosing specific replication and consistency settings, particularly concerning the CAP Theorem (Consistency, Availability, Partition Tolerance).
+5. Apply architectural thinking by justifying why certain data management decisions are made, rather than just how they are implemented.
 ### Tools & Environment
 - NoSQL Database: MongoDB (with Replica Sets)
 - Client Application Language: Java
@@ -21,7 +26,7 @@ link to code repository containing all client application code used for this exp
 
 
 ## Replication & Consistency Experiments
-For each experiment in Part B and Part C: Describe the specific configuration (e.g., replication factor, write/read concern). Document your observations (e.g., latency, data visibility, behaviour during failures). Use screenshots or console output snippets as evidence. Crucially, provide a detailed analysis of the architectural trade-offs. Justify why you would choose this specific configuration for a given business requirement, linking back to the CAP theorem and the course's emphasis on "why" over "how". For example, when would strong consistency be paramount, and what are its costs? When would eventual consistency be a better fit?
+<!-- For each experiment in Part B and Part C: Describe the specific configuration (e.g., replication factor, write/read concern). Document your observations (e.g., latency, data visibility, behaviour during failures). Use screenshots or console output snippets as evidence. Crucially, provide a detailed analysis of the architectural trade-offs. Justify why you would choose this specific configuration for a given business requirement, linking back to the CAP theorem and the course's emphasis on "why" over "how". For example, when would strong consistency be paramount, and what are its costs? When would eventual consistency be a better fit? -->
 ### Part B: Replication Strategies
 1. Replication Factor / Write Concern:
     - use replication factor (RF) at 3
@@ -30,7 +35,7 @@ durability across the cluster. Provide observations
 2. Leader-Follower (Primary-Backup) Model:
     - demonstrate writes and reads against the primary and how data propagates to followers
     - Simulate a primary node failure and observe how the system elects a new primary and handles ongoing operations. Note any downtime or data inconsistencies
-    - Mongodb doesn't support Leaderless (Multi-Primary) Model
+3. Mongodb doesn't support Leaderless (Multi-Primary) Model
 ### Part C: Consistency Models
 1. Strong Consistency:
     - Configure both writes and reads to demand strong consistency (w:majority for writes and readConcern:majority for reads in MongoDB).
@@ -46,8 +51,8 @@ durability across the cluster. Provide observations
 
 
 
-## Distributed Transactions (Part D - Conceptual)
-Detailed conceptual analysis of the e-commerce workflow, contrasting ACID with Saga patterns and their trade-offs.
+## Distributed Transactions
+<!-- Detailed conceptual analysis of the e-commerce workflow, contrasting ACID with Saga patterns and their trade-offs. -->
 ### Part D: Distributed Transactions (Conceptual / Optional Coding)
 1. Review the challenges of distributed transactions (e.g., Saga pattern)
 2. Conceptual Exercise: for a simple multi-service workflow (e-commerce order involving OrderService, PaymentService, InventoryService)
@@ -59,4 +64,4 @@ Detailed conceptual analysis of the e-commerce workflow, contrasting ACID with S
 
 
 ## Conclusion
-Summary of key learnings and any unexpected observations.
+<!-- Summary of key learnings and any unexpected observations. -->
