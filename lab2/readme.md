@@ -1,15 +1,17 @@
+# COMP41720 Distributed Systems Lab 2 Report
+# Spring Boot Implementation with Spring Data MongoDB
 ## Introduction
 ### Source Code Repository Link
-link to code repository containing all client application code used for this experiments: https://github.com/zeli8888/COMP41720-Distributed-Systems/tree/main/lab2
+The complete Spring Boot application code for this lab is available at: https://github.com/zeli8888/COMP41720-Distributed-Systems/tree/main/lab2
 ### Lab's purpose
-1. Understand the challenges of storing and managing data across multiple nodes in a distributed environment.
-2. Configure and compare different data replication strategies, including primary-backup (leader-follower), multi-primary (multi-leader), and leaderless architectures.
-3. Experiment with and differentiate between various consistency models, such as strong consistency, eventual consistency, and (optionally) causal consistency.
-4. Analyze the practical implications and architectural trade-offs of choosing specific replication and consistency settings, particularly concerning the CAP Theorem (Consistency, Availability, Partition Tolerance).
-5. Apply architectural thinking by justifying why certain data management decisions are made, rather than just how they are implemented.
+1. Understanding data storage challenges across multiple nodes.
+2. Comparing different write concern levels and replication strategies (primary-backup vs leaderless)
+3. Experimenting with consistency models (strong, eventual, causal).
+4. Analyzing CAP Theorem trade-offs in specific replication and consistency settings.
+5. Applying architectural thinking to justify design decisions.
 ### Tools & Environment
-- NoSQL Database: MongoDB (with Replica Sets)
-- Client Application Language: Java
+- NoSQL Database: MongoDB with Replica Sets
+- Client Application: Spring Boot with Spring Data MongoDB
 - Environment: Docker Compose
 
 
@@ -19,10 +21,255 @@ link to code repository containing all client application code used for this exp
 1. Database Cluster Setup:
     - Set up a distributed cluster for MongoDB with 3 nodes
     - Documentation of setup process (Docker Compose files, commands, configurations for replication)
+Create localhost volume directory:
+```bash
+mkdir -p ./data_volume/mongodb1/db
+mkdir -p ./data_volume/mongodb1/configdb
+mkdir -p ./data_volume/mongodb2/db
+mkdir -p ./data_volume/mongodb2/configdb
+mkdir -p ./data_volume/mongodb3/db
+mkdir -p ./data_volume/mongodb3/configdb
+```
+
+Create Docker Compose file:
+```bash
+touch docker-compose.yml
+```
+Docker Compose File:
+```dockerfile
+version: '3.8'
+
+services:
+  mongodb1:
+    image: mongo:5.0
+    container_name: mongodb1
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    volumes:
+      - mongodb1_data:/data/db
+      - mongodb1_config:/data/configdb
+    network_mode: "host"
+
+  mongodb2:
+    image: mongo:5.0
+    container_name: mongodb2
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    volumes:
+      - mongodb2_data:/data/db
+      - mongodb2_config:/data/configdb
+    network_mode: "host"
+
+  mongodb3:
+    image: mongo:5.0
+    container_name: mongodb3
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
+    volumes:
+      - mongodb3_data:/data/db
+      - mongodb3_config:/data/configdb
+    network_mode: "host"
+
+volumes:
+  mongodb1_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb1/db
+  mongodb1_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb1/configdb
+  mongodb2_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb2/db
+  mongodb2_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb2/configdb
+  mongodb3_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb3/db
+  mongodb3_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb3/configdb
+```
+
+Start the cluster:
+```bash
+docker-compose up -d
+```
+
+Initialize the replica set and check status:
+```js
+docker exec -it mongodb1 mongosh --port 27017
+rs.initiate(
+  {
+    _id: "rs0",
+    members: [
+        {_id: 0, host: 'localhost:27017'},
+        {_id: 1, host: 'localhost:27018'},
+        {_id: 2, host: 'localhost:27019'}
+    ]
+  }
+)
+rs.status()
+```
+
+Output:
+```js
+{
+  set: 'rs0',
+  date: ISODate('2025-10-13T17:39:12.328Z'),
+  myState: 1,
+  term: Long('1'),
+  syncSourceHost: '',
+  syncSourceId: -1,
+  heartbeatIntervalMillis: Long('2000'),
+  majorityVoteCount: 2,
+  writeMajorityCount: 2,
+  votingMembersCount: 3,
+  writableVotingMembersCount: 3,
+  optimes: {
+    lastCommittedOpTime: { ts: Timestamp({ t: 1760377144, i: 1 }), t: Long('1') },        
+    lastCommittedWallTime: ISODate('2025-10-13T17:39:04.420Z'),
+    readConcernMajorityOpTime: { ts: Timestamp({ t: 1760377144, i: 1 }), t: Long('1') },  
+    appliedOpTime: { ts: Timestamp({ t: 1760377144, i: 1 }), t: Long('1') },
+    durableOpTime: { ts: Timestamp({ t: 1760377144, i: 1 }), t: Long('1') },
+    lastAppliedWallTime: ISODate('2025-10-13T17:39:04.420Z'),
+    lastDurableWallTime: ISODate('2025-10-13T17:39:04.420Z')
+  },
+  lastStableRecoveryTimestamp: Timestamp({ t: 1760377113, i: 1 }),
+  electionCandidateMetrics: {
+    lastElectionReason: 'electionTimeout',
+    lastElectionDate: ISODate('2025-10-13T17:38:44.324Z'),
+    electionTerm: Long('1'),
+    lastCommittedOpTimeAtElection: { ts: Timestamp({ t: 1760377113, i: 1 }), t: Long('-1') },
+    lastSeenOpTimeAtElection: { ts: Timestamp({ t: 1760377113, i: 1 }), t: Long('-1') },  
+    numVotesNeeded: 2,
+    priorityAtElection: 1,
+    electionTimeoutMillis: Long('10000'),
+    numCatchUpOps: Long('0'),
+    newTermStartDate: ISODate('2025-10-13T17:38:44.397Z'),
+    wMajorityWriteAvailabilityDate: ISODate('2025-10-13T17:38:45.059Z')
+  },
+  members: [
+    {
+      _id: 0,
+      name: 'localhost:27017',
+      health: 1,
+      state: 1,
+      stateStr: 'PRIMARY',
+      uptime: 90,
+      optime: { ts: Timestamp({ t: 1760377144, i: 1 }), t: Long('1') },
+      optimeDate: ISODate('2025-10-13T17:39:04.000Z'),
+      lastAppliedWallTime: ISODate('2025-10-13T17:39:04.420Z'),
+      lastDurableWallTime: ISODate('2025-10-13T17:39:04.420Z'),
+      syncSourceHost: '',
+      syncSourceId: -1,
+      infoMessage: 'Could not find member to sync from',
+      electionTime: Timestamp({ t: 1760377124, i: 1 }),
+      electionDate: ISODate('2025-10-13T17:38:44.000Z'),
+      configVersion: 1,
+      configTerm: 1,
+      self: true,
+      lastHeartbeatMessage: ''
+    },
+    {
+      _id: 1,
+      name: 'localhost:27018',
+      health: 1,
+      state: 2,
+      stateStr: 'SECONDARY',
+      uptime: 39,
+      optime: { ts: Timestamp({ t: 1760377144, i: 1 }), t: Long('1') },
+      optimeDurable: { ts: Timestamp({ t: 1760377144, i: 1 }), t: Long('1') },
+      optimeDate: ISODate('2025-10-13T17:39:04.000Z'),
+      optimeDurableDate: ISODate('2025-10-13T17:39:04.000Z'),
+      lastAppliedWallTime: ISODate('2025-10-13T17:39:04.420Z'),
+      lastDurableWallTime: ISODate('2025-10-13T17:39:04.420Z'),
+      lastHeartbeat: ISODate('2025-10-13T17:39:10.364Z'),
+      lastHeartbeatRecv: ISODate('2025-10-13T17:39:11.367Z'),
+      pingMs: Long('0'),
+      lastHeartbeatMessage: '',
+      syncSourceHost: 'localhost:27017',
+      syncSourceId: 0,
+      infoMessage: '',
+      configVersion: 1,
+      configTerm: 1
+    },
+    {
+      _id: 2,
+      name: 'localhost:27019',
+      health: 1,
+      state: 2,
+      stateStr: 'SECONDARY',
+      uptime: 39,
+      optime: { ts: Timestamp({ t: 1760377144, i: 1 }), t: Long('1') },
+      optimeDurable: { ts: Timestamp({ t: 1760377144, i: 1 }), t: Long('1') },
+      optimeDate: ISODate('2025-10-13T17:39:04.000Z'),
+      optimeDurableDate: ISODate('2025-10-13T17:39:04.000Z'),
+      lastAppliedWallTime: ISODate('2025-10-13T17:39:04.420Z'),
+      lastDurableWallTime: ISODate('2025-10-13T17:39:04.420Z'),
+      lastHeartbeat: ISODate('2025-10-13T17:39:10.364Z'),
+      lastHeartbeatRecv: ISODate('2025-10-13T17:39:11.367Z'),
+      pingMs: Long('0'),
+      lastHeartbeatMessage: '',
+      syncSourceHost: 'localhost:27017',
+      syncSourceId: 0,
+      infoMessage: '',
+      configVersion: 1,
+      configTerm: 1
+    }
+  ],
+  ok: 1,
+  '$clusterTime': {
+    clusterTime: Timestamp({ t: 1760377144, i: 1 }),
+    signature: {
+      hash: Binary.createFromBase64('AAAAAAAAAAAAAAAAAAAAAAAAAAA=', 0),
+      keyId: Long('0')
+    }
+  },
+  operationTime: Timestamp({ t: 1760377144, i: 1 })
+}
+```
+
 2. Simple Data Model:
     - UserProfile (String user_id, String username, String email, Long last_login_time)
     - Initial Data Insertion
+Connect to primary node
+```bash
+docker exec -it mongodb1 mongosh
+```
+Insert initial data
+```bash
+use testdb;
+db.UserProfile.insertOne({
+  user_id: "user1",
+  username: "john_doe",
+  email: "john@example.com",
+  last_login_time: new Date().getTime()
+});
+```
 
+Output:
+```bash
+{
+  acknowledged: true,
+  insertedId: ObjectId('68ed160628fe19bcf6544ca7')
+}
+```
 
 
 ## Replication & Consistency Experiments
@@ -30,8 +277,11 @@ link to code repository containing all client application code used for this exp
 ### Part B: Replication Strategies
 1. Replication Factor / Write Concern:
     - use replication factor (RF) at 3
-    - Demonstrate how different write concerns/levels (w:1, w:majority, w:all in MongoDB) affect write latency and
-durability across the cluster. Provide observations
+    - Demonstrate how different write concerns/levels (w:1, w:majority, w:all in MongoDB) affect write latency and durability across the cluster. Provide observations
+
+I already set replication factor to 3 during initial setup.
+
+
 2. Leader-Follower (Primary-Backup) Model:
     - demonstrate writes and reads against the primary and how data propagates to followers
     - Simulate a primary node failure and observe how the system elects a new primary and handles ongoing operations. Note any downtime or data inconsistencies

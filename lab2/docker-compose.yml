@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  mongodb1:
+    image: mongo:5.0
+    container_name: mongodb1
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    volumes:
+      - mongodb1_data:/data/db
+      - mongodb1_config:/data/configdb
+    network_mode: "host"
+
+  mongodb2:
+    image: mongo:5.0
+    container_name: mongodb2
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    volumes:
+      - mongodb2_data:/data/db
+      - mongodb2_config:/data/configdb
+    network_mode: "host"
+
+  mongodb3:
+    image: mongo:5.0
+    container_name: mongodb3
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
+    volumes:
+      - mongodb3_data:/data/db
+      - mongodb3_config:/data/configdb
+    network_mode: "host"
+
+volumes:
+  mongodb1_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb1/db
+  mongodb1_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb1/configdb
+  mongodb2_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb2/db
+  mongodb2_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb2/configdb
+  mongodb3_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb3/db
+  mongodb3_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/mongodb3/configdb
