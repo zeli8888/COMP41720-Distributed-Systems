@@ -453,9 +453,9 @@
             - Data Durability: Zero failed operations suggests driver-level retry mechanisms handled the transition
 
           - CAP Theorem Positioning
-            - CP During Normal Operations: Prefers Consistency over Availability - reads from primary guarantee consistency
-            - AP During Failover: Becomes Available for reads (via secondaries) but Partitions from writes during election
-            - Partition Tolerance: Maintains operation despite node failures through replication and election
+            - CP During Normal Operations: Prioritizes Consistency (C) and Partition Tolerance (P) by ensuring a single primary for writes and tolerating node failures
+            - AP During Failover: Becomes Available for reads (via secondaries) but sacrifices write availability until a new primary is elected
+            - Partition Tolerance: The system can handle node failures and network partitions, but write availability is compromised during primary elections
 
       7. Justifying Configuration Choice for Business Requirements
           - When to Prefer Strong Consistency (Primary Reads)
