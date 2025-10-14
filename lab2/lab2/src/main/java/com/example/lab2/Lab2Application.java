@@ -1,5 +1,6 @@
 package com.example.lab2;
 
+import com.example.lab2.service.ConsistencyModelService;
 import com.example.lab2.service.ReplicationModelService;
 import com.example.lab2.service.UserProfileService;
 import com.example.lab2.service.WriteConcernService;
@@ -14,6 +15,7 @@ public class Lab2Application implements CommandLineRunner {
     private final UserProfileService userProfileService;
     private final WriteConcernService writeConcernService;
     private final ReplicationModelService replicationModelService;
+    private final ConsistencyModelService consistencyModelService;
 
     public static void main(String[] args) {
         SpringApplication.run(Lab2Application.class, args);
@@ -23,6 +25,7 @@ public class Lab2Application implements CommandLineRunner {
     public void run(String... args) {
         userProfileService.checkReplicaSetStatus();
 //        writeConcernService.performWriteConcernExperiments();
-        replicationModelService.performReplicationExperiments();
+//        replicationModelService.performReplicationExperiments();
+        consistencyModelService.performConsistencyExperiments();
     }
 }

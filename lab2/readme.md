@@ -365,6 +365,63 @@ calAddress=mongodb3:27019, hosts=[mongodb2:27018, mongodb1:27017, mongodb3:27019
     - design an experiment to demonstrate that causally related operations are observed in order, even if other concurrent operations are not.
 
 
+Experiment Results for Strong Consistency with immediate read from secondary after write in primary
+```bash
+🧪 STRONG CONSISTENCY TEST
+✅ Write completed with w:majority
+✅ Strong consistency verified - immediate read from secondary
+📊 Document content: username_strong_write
+```
+
+Experiment Results for Strong Consistency with network partition during write/read
+```bash
+  Testing during network partition...
+  🔌 StepDown command sent to simulate network partition
+2025-10-14T01:18:07.999Z  INFO 1655 --- [lab2] [-mongodb3:27019] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=mongodb3:27019, type=REPLICA_
+SET_OTHER, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=21, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=42095790, minRoundTripTimeNanos=807238, setName='rs0', canonic
+alAddress=mongodb3:27019, hosts=[mongodb2:27018, mongodb1:27017, mongodb3:27019], passives=[], arbiters=[], primary='mongodb3:27019', tagSet=TagSet{[]}, electionId=7fffffff000000000000000d, setVersion=1, topologyVersion=TopologyVersion{processId=68ed84e670714eb00eb3c089, counter=25}, lastWriteDate=Tue Oct 14 01:18:07 UTC 2025, lastUpdateTimeNanos=24669120445431}
+2025-10-14T01:18:08.000Z  INFO 1655 --- [lab2] [-mongodb3:27019] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=mongodb3:27019, type=REPLICA_
+SET_SECONDARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=21, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=42095790, minRoundTripTimeNanos=807238, setName='rs0', can
+onicalAddress=mongodb3:27019, hosts=[mongodb2:27018, mongodb1:27017, mongodb3:27019], passives=[], arbiters=[], primary='null', tagSet=TagSet{[]}, electionId=null, setVersion=1, topologyVersion=TopologyVersion{processId=68ed84e670714eb00eb3c089, counter=26}, lastWriteDate=Tue Oct 14 01:18:07 UTC 2025, lastUpdateTimeNanos=24669120986302}
+2025-10-14T01:18:08.018Z  INFO 1655 --- [lab2] [onPool-worker-2] org.mongodb.driver.cluster               : Waiting for server to become available for operation with ID 18. Remaining time: 29992 ms. Selector: ReadPreferenceServe
+rSelector{readPreference=primary}, topology description: {type=REPLICA_SET, servers=[{address=mongodb1:27017, type=REPLICA_SET_SECONDARY, roundTripTime=52.4 ms, state=CONNECTED}, {address=mongodb2:27018, type=REPLICA_SET_SECONDARY, roundTripTime=52.4 ms, state=CONNECTED}, {address=mongodb3:27019, type=REPLICA_SET_SECONDARY, roundTripTime=42.1 ms, state=CONNECTED}].
+2025-10-14T01:18:08.018Z  INFO 1655 --- [lab2] [onPool-worker-1] org.mongodb.driver.cluster               : Waiting for server to become available for operation with ID 17. Remaining time: 29991 ms. Selector: WritableServerSelec
+tor, topology description: {type=REPLICA_SET, servers=[{address=mongodb1:27017, type=REPLICA_SET_SECONDARY, roundTripTime=52.4 ms, state=CONNECTED}, {address=mongodb2:27018, type=REPLICA_SET_SECONDARY, roundTripTime=52.4 ms, state=CONNECTED}, {address=mongodb3:27019, type=REPLICA_SET_SECONDARY, roundTripTime=42.1 ms, state=CONNECTED}].
+2025-10-14T01:18:17.101Z  INFO 1655 --- [lab2] [-mongodb1:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=mongodb1:27017, type=REPLICA_
+SET_SECONDARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=21, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=33822214, minRoundTripTimeNanos=506768, setName='rs0', can
+onicalAddress=mongodb1:27017, hosts=[mongodb2:27018, mongodb1:27017, mongodb3:27019], passives=[], arbiters=[], primary='null', tagSet=TagSet{[]}, electionId=null, setVersion=1, topologyVersion=TopologyVersion{processId=68ed84e6d29ce3200db99020, counter=34}, lastWriteDate=Tue Oct 14 01:18:07 UTC 2025, lastUpdateTimeNanos=24678222455004}
+2025-10-14T01:18:17.110Z  INFO 1655 --- [lab2] [-mongodb2:27018] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=mongodb2:27018, type=REPLICA_
+SET_SECONDARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=21, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=33778090, minRoundTripTimeNanos=581942, setName='rs0', can
+onicalAddress=mongodb2:27018, hosts=[mongodb2:27018, mongodb1:27017, mongodb3:27019], passives=[], arbiters=[], primary='null', tagSet=TagSet{[]}, electionId=null, setVersion=1, topologyVersion=TopologyVersion{processId=68ed84e6f4c321496b97dc1e, counter=26}, lastWriteDate=Tue Oct 14 01:18:07 UTC 2025, lastUpdateTimeNanos=24678231400472}
+2025-10-14T01:18:18.854Z  INFO 1655 --- [lab2] [-mongodb1:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=mongodb1:27017, type=REPLICA_
+SET_SECONDARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=21, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=33822214, minRoundTripTimeNanos=506768, setName='rs0', can
+onicalAddress=mongodb1:27017, hosts=[mongodb2:27018, mongodb1:27017, mongodb3:27019], passives=[], arbiters=[], primary='mongodb1:27017', tagSet=TagSet{[]}, electionId=7fffffff000000000000000e, setVersion=1, topologyVersion=TopologyVersion{processId=68ed84e6d29ce3200db99020, counter=35}, lastWriteDate=Tue Oct 14 01:18:07 UTC 2025, lastUpdateTimeNanos=24679975644681}
+2025-10-14T01:18:18.862Z  INFO 1655 --- [lab2] [-mongodb1:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=mongodb1:27017, type=REPLICA_
+SET_PRIMARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=21, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=33822214, minRoundTripTimeNanos=506768, setName='rs0', canon
+icalAddress=mongodb1:27017, hosts=[mongodb2:27018, mongodb1:27017, mongodb3:27019], passives=[], arbiters=[], primary='mongodb1:27017', tagSet=TagSet{[]}, electionId=7fffffff000000000000000e, setVersion=1, topologyVersion=TopologyVersion{processId=68ed84e6d29ce3200db99020, counter=37}, lastWriteDate=Tue Oct 14 01:18:18 UTC 2025, lastUpdateTimeNanos=24679982752638}
+2025-10-14T01:18:18.862Z  INFO 1655 --- [lab2] [-mongodb1:27017] org.mongodb.driver.cluster               : Discovered replica set primary mongodb1:27017 with max election id 7fffffff000000000000000e and max set version 1       
+  Read operations: 5 successful, 0 failed
+  Write operations: 5 successful, 0 failed
+```
+
+Experiment Results for Eventual Consistency with read from secondary after write in primary
+```bash
+🧪 EVENTUAL CONSISTENCY TEST
+✅ Write completed with w:1
+✅ Document propagated after 104ms on attempt 2
+📊 Final document content: username_eventual_write
+```
+
+Experiment Results for Causal Consistency with related operations observed in order
+```bash
+🧪 CAUSAL CONSISTENCY TEST
+✅ Created cause document: user_causal_1_1760404699902
+✅ Created effect document: user_causal_2_1760404699902 (references user_causal_1_1760404699902)
+  Verifying causal order:
+    Round 1: Cause=FOUND, Effect=FOUND
+✅ Causal consistency verified - related operations maintain order
+```
+
 
 ## Distributed Transactions
 <!-- Detailed conceptual analysis of the e-commerce workflow, contrasting ACID with Saga patterns and their trade-offs. -->
