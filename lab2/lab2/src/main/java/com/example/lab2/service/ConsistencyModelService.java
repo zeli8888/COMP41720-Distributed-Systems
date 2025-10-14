@@ -152,8 +152,7 @@ public class ConsistencyModelService {
     private void testCausalConsistency() {
         System.out.println("\n🧪 CAUSAL CONSISTENCY TEST");
 
-        try (ClientSession session = mongoTemplate.getMongoDatabaseFactory().getSession(ClientSessionOptions.builder().build())) {
-            session.startTransaction();
+        try (ClientSession session = mongoTemplate.getMongoDatabaseFactory().getSession(ClientSessionOptions.builder().causallyConsistent(true).build())) {
 
             // Create causally related operations
             String user1Id = "user_causal_1_" + System.currentTimeMillis();
@@ -169,8 +168,6 @@ public class ConsistencyModelService {
             user2.setEmail("ref_" + user1Id + "@example.com"); // Reference to first user
             mongoTemplate.insert(user2, TEST_COLLECTION);
             System.out.println("✅ Created effect document: " + user2Id + " (references " + user1Id + ")");
-
-            session.commitTransaction();
 
             // Verify causal order is maintained
             verifyCausalOrder(user1Id, user2Id);

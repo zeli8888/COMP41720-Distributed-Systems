@@ -2,6 +2,7 @@
 ## Spring Boot Implementation with Spring Data MongoDB
 ## Introduction
 ### Source Code Repository Link
+- Markdown version of this report is highly recommended: https://github.com/zeli8888/COMP41720-Distributed-Systems/tree/main/lab2/readme.md
 - The complete code for this lab is available at: https://github.com/zeli8888/COMP41720-Distributed-Systems/tree/main/lab2
 - To fetch the code and run on your computer, use:
     ```bash
@@ -574,15 +575,23 @@
 
       3. Executive Summary & Key Observations
           - Stale Data Visibility: Initial reads from secondary nodes returned outdated data, confirming the presence of stale data during replication windows.
-
           - Propagation Latency: The system demonstrated a 104ms replication delay, with data becoming consistent across all nodes after the second read attempt.
-
           - Eventual Nature Proven: The retry loop successfully captured the transition from inconsistent to consistent state, validating the "eventual" guarantee.
+          - CAP Theorem Alignment: The behavior confirms AP (Availability & Partition Tolerance) characteristics - the system remains available for reads and writes even during partitions, accepting temporary inconsistencies.
 
-          - High Availability: Unlike strong consistency configurations, the system maintained continuous availability for both reads and writes throughout the experiment.
       4. Detailed Analysis of Architectural Trade-offs
-      
-      5. Justifying Configuration Choice for Business Requirements
+          - Behavior: Write operations return immediately after primary acknowledgment (w:1), while read operations may return stale data from secondary nodes until replication completes.
+
+          - Data Visibility: The system exhibits temporary inconsistency windows where different nodes show different versions of the same data. This is the fundamental trade-off for achieving higher availability and lower latency.
+
+          - Architectural Trade-off:
+            - This configuration explicitly prioritizes Availability (A) and Partition Tolerance (P) over Consistency (C).
+            - The trade-off is intentional: temporary data inconsistency is acceptable in exchange for continuous system availability and better performance.
+            - The "why" behind this choice is that for many modern applications, being always available provides better user experience than guaranteed consistency, especially when the cost of inconsistency is low.
+        5. Justifying Configuration Choice for Business Requirements
+            - When to Choose Eventual Consistency (AP Configuration)
+              - Business Requirement: Social media interactions (likes, comments), recommendation systems and any scenario where temporary data staleness doesn't impact core functionality.
+              - Justification: Choose eventual consistency when system availability and performance are more critical than immediate data accuracy. For social media platforms, showing a like count that's a few seconds old doesn't harm user experience, but site unavailability would. The business benefits from low write latency and high read throughput that this model enables.
 
 3. Causal Consistency (Optional / Bonus):
     - design an experiment to demonstrate that causally related operations are observed in order, even if other concurrent operations are not.
@@ -602,10 +611,26 @@
           ```
 
       3. Executive Summary & Key Observations
-      
+          - Causal Relationship Preservation: The system consistently maintained the causal relationship between documents - the effect document was never observed without its cause document present.
+
+          - Order Guarantee: Causally related operations (creation of cause followed by effect) were always observed in the correct temporal sequence across all read attempts.
+
+          - CAP Theorem Positioning: Causal consistency represents a pragmatic middle ground in the CAP spectrum, offering stronger guarantees than eventual consistency while avoiding the availability costs of strong consistency.
+
       4. Detailed Analysis of Architectural Trade-offs
-      
+
+          - Behavior: The system tracks causal dependencies between operations, ensuring that if operation A causally precedes operation B, then any node that observes B will also observe A and will see them in the correct order.
+
+          - Data Visibility: Readers always see a causally consistent view of the data - no causal violations occur, but the system may present different consistent snapshots to different readers at the same time.
+
+          - Architectural Trade-off:
+            - This configuration balances consistency requirements with system availability and performance.
+            - The trade-off is nuanced: we accept that different clients might see different orders of concurrent operations, but we strictly preserve causal relationships.
+            - The "why" behind this choice is that many real-world applications require causal ordering (which matches human intuition about cause-and-effect).
       5. Justifying Configuration Choice for Business Requirements
+          - When to Choose Causal Consistency (Practical CP Configuration)
+            - Business Requirement: Collaborative applications (Google Docs, multiplayer games), social media feeds and any scenario where causal relationships matter.
+            - Justification: Choose causal consistency when we need stronger guarantees than eventual consistency but cannot afford the availability penalties of strong consistency. For collaborative editing applications, it's critical that if someone edits a paragraph (cause) and then someone else comments on that edit (effect), the comment never appears without the edit. The business benefits from natural alignment with how humans perceive cause-and-effect relationships
 
 ## Distributed Transactions
 <!-- Detailed conceptual analysis of the e-commerce workflow, contrasting ACID with Saga patterns and their trade-offs. -->
@@ -737,3 +762,19 @@
 
 ## Conclusion
 <!-- Summary of key learnings and any unexpected observations. -->
+- Write Concerns
+  - Different write concern levels demonstrated clear trade-offs between latency and durability
+  - w:1 offered the best performance but with potential data loss risk
+  - w:majority and w:all provided stronger consistency guarantees at the cost of higher latency and reduced availability.
+
+- Replication Models
+  - Leader-Follower (Primary-Backup) Model provided strong consistency and straightforward conflict resolution but suffered from write unavailability during failover.
+  - Leaderless (Multi-Primary) Model offers improved availability and write distribution but introduces complexity in conflict resolution and consistency management.
+
+- Consistency Models
+  - Strong consistency (via w:majority and readConcern:majority) ensures that write and read were acknowledged by a majority of nodes, establishing an agreed-upon truth for the system. This comes at the cost of higher latency and, during network partitions, sacrificing the availability of clients connections.
+  - Eventual consistency (w:1) showed temporary data staleness but offered better performance. 
+  - Causal consistency emerged as a practical middle ground, preserving logical operation ordering without strong consistency's availability costs.
+
+- Distributed Transactions Analysis
+  - The conceptual comparison revealed that while ACID transactions provide simplicity through strong consistency, the Saga pattern offers better scalability and fault tolerance for distributed workflows, albeit with increased complexity in compensation logic.
