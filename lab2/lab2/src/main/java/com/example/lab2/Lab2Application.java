@@ -24,8 +24,30 @@ public class Lab2Application implements CommandLineRunner {
     @Override
     public void run(String... args) {
         userProfileService.checkReplicaSetStatus();
-//        writeConcernService.performWriteConcernExperiments();
-//        replicationModelService.performReplicationExperiments();
-        consistencyModelService.performConsistencyExperiments();
+
+        String serviceToRun = parseServiceArgument(args);
+
+        switch (serviceToRun) {
+            case "write-concern":
+                writeConcernService.performWriteConcernExperiments();
+                break;
+            case "replication":
+                replicationModelService.performReplicationExperiments();
+                break;
+            case "consistency":
+                consistencyModelService.performConsistencyExperiments();
+                break;
+            default:
+                System.out.println("no valid args, existing");
+        }
+    }
+
+    private String parseServiceArgument(String... args) {
+        for (String arg : args) {
+            if (arg.startsWith("--service=")) {
+                return arg.substring("--service=".length());
+            }
+        }
+        return "";
     }
 }

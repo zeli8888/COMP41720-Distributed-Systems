@@ -51,30 +51,6 @@ services:
     networks:
       - mongo-network
 
-  # Pumba network latency simulator
-  # Adds latency to ALL network communications between containers
-  # useless, don't know why
-  # pumba:
-  #   image: gaiaadm/pumba:latest
-  #   container_name: pumba
-  #   command: >
-  #     netem
-  #     --duration 24h
-  #     delay
-  #     --time 500000
-  #     mongodb1 mongodb2 mongodb3 spring-app
-  #   depends_on:
-  #     - mongodb1
-  #     - mongodb2
-  #     - mongodb3
-  #     - spring-app
-  #   volumes:
-  #     # - /var/run/docker.sock:/var/run/docker.sock # for Linux/MacOS
-  #     - //var/run/docker.sock:/var/run/docker.sock # for Windows
-  #   networks:
-  #     - mongo-network
-  #   restart: unless-stopped
-
 volumes:
   mongodb1_data:
     driver: local
@@ -117,6 +93,8 @@ networks:
   mongo-network:
     driver: bridge
 
-#docker compose up -d
-#docker compose exec spring-app /bin/bash
-#mvn spring-boot:run
+# docker compose up -d
+# docker compose exec spring-app /bin/bash
+# mvn spring-boot:run -Dspring-boot.run.arguments="--service=write-concern"
+# mvn spring-boot:run -Dspring-boot.run.arguments="--service=replication"
+# mvn spring-boot:run -Dspring-boot.run.arguments="--service=consistency"
