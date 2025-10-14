@@ -339,22 +339,21 @@
             - Architectural Trade-off: This is an even stricter form of CP. While it offers the ultimate durability guarantee, it severely impacts Availability (A). The latency is the highest, and the system's ability to tolerate any node failure is zero for write operations.
 
       6. Justifying Configuration Choice for Business Requirements
-      The "why" behind the choice is driven by the business's tolerance for data loss, stale data, and downtime.
 
-        - When to Choose w:majority (The Balanced CP Choice)
-          - Business Requirement: Financial transactions, user account data, inventory management systems, or any application where data correctness is paramount.
+          - When to Choose w:majority (The Balanced CP Choice)
+            - Business Requirement: Financial transactions, user account data, inventory management systems, or any application where data correctness is paramount.
 
-          - Justification: This is the most common choice for applications requiring strong consistency. It provides an excellent balance between durability and acceptable latency. It accepts a slight performance penalty (2ms higher than w:1 in our test) to gain the guarantee that once a write is acknowledged, it will survive a single node failure and will be consistent across the cluster. The cost (slightly higher latency) is a worthy trade-off for the benefit (data safety).
+            - Justification: This is the most common choice for applications requiring strong consistency. It provides an excellent balance between durability and acceptable latency. It accepts a slight performance penalty to gain the guarantee that once a write is acknowledged, it will survive a single node failure and will be consistent across the cluster. The cost (slightly higher latency) is a worthy trade-off for the benefit (data safety).
 
-        - When to Choose w:1 (The Performance AP Choice)
-          - Business Requirement: High-volume telemetry data, application logs, social media activity streams, real-time analytics, or any scenario where throughput and speed are more critical than perfect durability.
+          - When to Choose w:1 (The Performance AP Choice)
+            - Business Requirement: High-volume telemetry data, application logs, social media activity streams, real-time analytics, or any scenario where throughput and speed are more critical than perfect durability.
 
-          - Justification: I would choose this when the business can tolerate occasional, small amounts of data loss in exchange for blistering performance. For example, losing a few log lines or a single user's "click" event is acceptable if it means you can process millions of such events per second. This embodies the "why" of prioritizing user experience and system scalability over absolute data correctness for non-critical data. The cost (risk of data loss) is accepted for the benefit (system speed and responsiveness).
+            - Justification: I would choose this when the business can tolerate occasional, small amounts of data loss in exchange for blistering performance. For example, losing a few log lines or a single user's "click" event is acceptable if it means you can process millions of such events per second. This embodies the "why" of prioritizing user experience and system scalability over absolute data correctness for non-critical data. The cost (risk of data loss) is accepted for the benefit (system speed and responsiveness).
 
-        - When to Choose w:all (The Strict CP / Niche Choice)
-          - Business Requirement: Extremely critical configuration data, master encryption keys, or legal records where every single copy must be identical at all times.
+          - When to Choose w:all (The Strict CP / Niche Choice)
+            - Business Requirement: Extremely critical configuration data, master encryption keys, or legal records where every single copy must be identical at all times.
 
-          - Justification: This is rarely used for general application writes due to its severe impact on availability and high tail latency. The reason here is often regulatory, requirement for absolute certainty. The business is explicitly stating that the integrity of this specific data is so critical that they are willing to have their entire write process halt if any single database node has a problem.
+            - Justification: This is rarely used for general application writes due to its severe impact on availability and high tail latency. The reason here is often regulatory, requirement for absolute certainty. The business is explicitly stating that the integrity of this specific data is so critical that they are willing to have their entire write process halt if any single database node has a problem.
 
 2. Leader-Follower (Primary-Backup) Model:
     - demonstrate writes and reads against the primary and how data propagates to followers
