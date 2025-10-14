@@ -2,13 +2,18 @@
 ## Spring Boot Implementation with Spring Data MongoDB
 ## Introduction
 ### Source Code Repository Link
-The complete code for this lab is available at: https://github.com/zeli8888/COMP41720-Distributed-Systems/tree/main/lab2
+- The complete code for this lab is available at: https://github.com/zeli8888/COMP41720-Distributed-Systems/tree/main/lab2
+- To fetch the code and run on your computer, use:
+    ```bash
+    git clone https://github.com/zeli8888/COMP41720-Distributed-Systems.git
+    cd lab2
+    ```
 ### Lab's purpose
-1. Understanding data storage challenges across multiple nodes.
-2. Comparing different write concern levels and replication strategies (primary-backup vs leaderless)
-3. Experimenting with consistency models (strong, eventual, causal).
-4. Analyzing CAP Theorem trade-offs in specific replication and consistency settings.
-5. Applying architectural thinking to justify design decisions.
+- Understanding data storage challenges across multiple nodes.
+- Comparing different write concern levels and replication strategies (primary-backup vs leaderless)
+- Experimenting with consistency models (strong, eventual, causal).
+- Analyzing CAP Theorem trade-offs in specific replication and consistency settings.
+- Applying architectural thinking to justify design decisions.
 ### Tools & Environment
 - NoSQL Database: MongoDB with Replica Sets
 - Client Application: Spring Boot with Spring Data MongoDB
@@ -297,9 +302,63 @@ The complete code for this lab is available at: https://github.com/zeli8888/COMP
             Total Documents: 200000
           ```
 
+      4. Executive Summary & Key Observations
+          - Latency: w:1 (7ms avg) is the fastest, followed by w:majority (9ms avg), and finally w:all (10ms avg) as the slowest.
+
+          - Durability & Consistency: w:all and w:majority provide stronger guarantees, while w:1 prioritizes speed at the cost of potential data loss.
+
+          - Throughput & Tail Latency: While average latencies are close, the higher standard deviation and maximum latency for w:all and w:majority indicate they are more susceptible to performance degradation from node latency or network issues.
+      
+      5. Detailed Analysis of Architectural Trade-offs
+          - Write Concern w:1
+            - Behavior: The write operation returns as soon as the primary node has applied the write. The replication to the two secondary nodes happens asynchronously in the background.
+
+            - Data Visibility: Data is immediately visible on the primary. It might not be immediately visible on secondaries, leading to stale reads if an application reads from a secondary.
+
+            - Behavior During Failures: This is the most risky mode. If the primary node fails immediately after acknowledging the write and before the data is replicated, the data can be lost forever. A new primary will be elected from the secondaries that may not have received the write.
+
+            - Architectural Trade-off: This configuration prioritizes Availability and Partition Tolerance (AP) from the CAP theorem. It sacrifices strong Consistency (C) for low latency and high availability of writes. The system remains writable even if some secondaries are disconnected, as long as the primary is alive.
+
+          - Write Concern w:majority
+            - Behavior: The write operation returns only after a majority of nodes (2 out of 3 in this RF=3 cluster) have acknowledged the write.
+
+            - Data Visibility: The written data is guaranteed to be visible on at least 2 nodes. This prevents stale reads if your read concern is also set to majority. It offers strong consistency.
+
+            - Behavior During Failures: This configuration is highly resilient. Even if the primary node fails, the data is already on at least one other node. During a network partition, if a majority of nodes (including the primary) can still communicate, writes can continue. If the primary is in the minority partition, it becomes read-only.
+
+            - Architectural Trade-off: This is the classic CP (Consistency & Partition Tolerance) configuration. It ensures data consistency and durability even during failures, but at the cost of higher latency and potentially reduced availability. If a majority of nodes cannot be reached, writes will fail, making the system less available for write operations.
+
+          - Write Concern w:all
+            - Behavior: The write operation returns only after all nodes in the replica set (all 3 in this case) have acknowledged the write.
+
+            - Data Visibility: The data is guaranteed to be on every single node. This is the strongest possible durability guarantee.
+
+            - Behavior During Failures: This configuration is the most fragile in terms of availability. If any single node becomes unavailable or slow, all write operations will block or fail. The system's write availability is directly tied to the health of every single node.
+
+            - Architectural Trade-off: This is an even stricter form of CP. While it offers the ultimate durability guarantee, it severely impacts Availability (A). The latency is the highest, and the system's ability to tolerate any node failure is zero for write operations.
+
+      6. Justifying Configuration Choice for Business Requirements
+      The "why" behind the choice is driven by the business's tolerance for data loss, stale data, and downtime.
+
+        - When to Choose w:majority (The Balanced CP Choice)
+          - Business Requirement: Financial transactions, user account data, inventory management systems, or any application where data correctness is paramount.
+
+          - Justification: This is the most common choice for applications requiring strong consistency. It provides an excellent balance between durability and acceptable latency. It accepts a slight performance penalty (2ms higher than w:1 in our test) to gain the guarantee that once a write is acknowledged, it will survive a single node failure and will be consistent across the cluster. The cost (slightly higher latency) is a worthy trade-off for the benefit (data safety).
+
+        - When to Choose w:1 (The Performance AP Choice)
+          - Business Requirement: High-volume telemetry data, application logs, social media activity streams, real-time analytics, or any scenario where throughput and speed are more critical than perfect durability.
+
+          - Justification: I would choose this when the business can tolerate occasional, small amounts of data loss in exchange for blistering performance. For example, losing a few log lines or a single user's "click" event is acceptable if it means you can process millions of such events per second. This embodies the "why" of prioritizing user experience and system scalability over absolute data correctness for non-critical data. The cost (risk of data loss) is accepted for the benefit (system speed and responsiveness).
+
+        - When to Choose w:all (The Strict CP / Niche Choice)
+          - Business Requirement: Extremely critical configuration data, master encryption keys, or legal records where every single copy must be identical at all times.
+
+          - Justification: This is rarely used for general application writes due to its severe impact on availability and high tail latency. The reason here is often regulatory, requirement for absolute certainty. The business is explicitly stating that the integrity of this specific data is so critical that they are willing to have their entire write process halt if any single database node has a problem.
+
 2. Leader-Follower (Primary-Backup) Model:
     - demonstrate writes and reads against the primary and how data propagates to followers
     - Simulate a primary node failure and observe how the system elects a new primary and handles ongoing operations. Note any downtime or data inconsistencies
+    - Mongodb doesn't support Leaderless (Multi-Primary) Model, so this part is skipped.
 
       1. Run the Spring Boot application with replication test:
           ```bash
@@ -307,7 +366,7 @@ The complete code for this lab is available at: https://github.com/zeli8888/COMP
           mvn spring-boot:run -Dspring-boot.run.arguments="--service=replication"
           ```
 
-      2. Experiment Results for writes against primary and propagates to followers
+      2. Experiment Results for writes against primary and propagates to followers (using default write concern w:1)
           ```bash
           🧪 TEST 1: WRITE PROPAGATION TO FOLLOWERS
           📝 Writing 50 documents to primary...
@@ -364,7 +423,58 @@ The complete code for this lab is available at: https://github.com/zeli8888/COMP
             New Primary: mongodb3:27019
           ✅ Failover successful
           ```
-3. Mongodb doesn't support Leaderless (Multi-Primary) Model, so this part is skipped.
+
+      5. Executive Summary & Key Observations
+          - Write Propagation
+            - 100% Success Rate: All 50 documents written to the primary were successfully replicated to secondaries
+            - Data Visibility: Immediate consistency on primary, near-real-time on secondaries
+
+          - Read Preferences
+            - Primary Reads: Guaranteed latest data with minimal latency (0ms)
+            - Secondary Reads: Potentially stale data but with same low latency
+            - Primary Preferred: Automatic failover to secondaries if primary unavailable
+
+          - Failover Process
+            - Election Time: ~10.3 seconds for new primary election
+            - Downtime Impact: 20 concurrent operations experienced brief unavailability
+            - Data Consistency: Zero data loss or inconsistencies observed
+            - Recovery Pattern: Seamless transition with driver-level retry mechanisms
+      6. Detailed Analysis of Architectural Trade-offs
+          - Write Propagation Behavior
+            - Asynchronous Replication: The primary acknowledges writes immediately (default w:1) and replicates to secondaries in the background
+            - Eventual Consistency: Secondaries eventually receive all writes, but may lag behind the primary
+          - Read Consistency Models
+            - Strong Consistency (Primary): Reading from primary guarantees the most recent writes
+            - Eventual Consistency (Secondary): Reading from secondaries may return stale data during replication lag
+            - High Availability (Primary Preferred): Provides automatic failover while preferring strong consistency when available
+          - Failure Handling & Availability
+            - Failover Time: 10.3-second election represents significant write unavailability
+            - Read Availability: Secondary reads remained available during primary failure
+            - Data Durability: Zero failed operations suggests driver-level retry mechanisms handled the transition
+
+          - CAP Theorem Positioning
+            - CP During Normal Operations: Prefers Consistency over Availability - reads from primary guarantee consistency
+            - AP During Failover: Becomes Available for reads (via secondaries) but Partitions from writes during election
+            - Partition Tolerance: Maintains operation despite node failures through replication and election
+
+      7. Justifying Configuration Choice for Business Requirements
+          - When to Prefer Strong Consistency (Primary Reads)
+            - Business Requirement: Financial systems, e-commerce checkouts, reservation systems where reading the latest data is critical
+            - Justification: primary reads can guarantee data freshness, which makes this ideal for transactional systems. The "why" is risk avoidance - the cost of acting on stale data (e.g., double-spending, overbooking) far outweighs the performance benefits of reading from secondaries.
+
+          - When to Accept Eventual Consistency (Secondary Reads)
+            - Business Requirement: Social media feeds, product catalogs, analytics dashboards where slight staleness is acceptable
+            - Justification: low latency on secondary reads makes this suitable for read-scaling. The "why" is scalability - distributing read load to secondaries improves overall system throughput without significant data freshness compromise.
+
+          - When This Leader-Follower (Primary-Backup) Model: Fits
+
+            - Business Requirement: Applications where data consistency and integrity are non-negotiable, such as financial transaction systems, inventory management, or user account data.
+
+            - Justification: The single-primary design is ideal when the business cannot tolerate data inconsistencies or conflicts. The temporary write unavailability during failover (10.3 seconds in our test) is an acceptable trade-off to ensure that once a write is acknowledged, it becomes the single source of truth. The system provides excellent fault tolerance for data protection while maintaining straightforward operational semantics.
+
+          - When to Consider Alternative Leaderless (Multi-Primary) Model
+            - Business Requirement: Applications requiring sub-second failover or multi-region writes
+            - Justification: The 10+ second election time may be unacceptable for high-availability requirements. The inability to write to multiple nodes simultaneously limits geographic distribution. The "why" is latency sensitivity - for global applications, the delay in write availability during failover could impact user experience or business operations. In such cases, a multi-primary model would provide better availability at the cost of increased complexity and potential consistency issues.
 ### Part C: Consistency Models
 1. Strong Consistency:
     - Configure both writes and reads to demand strong consistency (w:majority for writes and readConcern:majority for reads in MongoDB).
@@ -416,6 +526,33 @@ The complete code for this lab is available at: https://github.com/zeli8888/COMP
             Write operations: 5 successful, 0 failed
           ```
 
+      4. Executive Summary & Key Observations
+          - Immediate Data Visibility: With w:majority and readConcern:majority, data written to primary was immediately visible on secondary nodes, demonstrating strong consistency.
+
+          - Latency Impact: Strong consistency operations showed slightly higher latency due to the coordination required between nodes to achieve consensus.
+
+          - Failure Behavior: During network partitions, the system experienced temporary unavailability while the replica set reorganized and elected a new primary. However, once a new primary was established, both read and write operations resumed successfully with zero data loss.
+
+          - CAP Theorem Alignment: The behavior confirms CP (Consistency & Partition Tolerance) characteristics - during partitions, the system prioritized consistency over availability, temporarily blocking operations until consistency could be guaranteed.
+      5. Detailed Analysis of Architectural Trade-offs
+          - Behavior: Write operations block until a majority of nodes acknowledge the write. Read operations only return data that has been replicated to a majority of nodes, ensuring consistency.
+
+          - Data Visibility: Data becomes visible on secondaries after replication latency. While not instantaneous, readConcern:majority prevents reading uncommitted or rolled-back data, providing strong consistency guarantees despite replication delay.
+
+          - Failover Mechanism: This configuration demonstrates classic CP behavior from the CAP theorem:
+            - The isolated primary detects it can no longer reach a majority of nodes
+            - The primary steps down to prevent inconsistent writes
+            - The majority partition undergoes leader election
+            - No writes are accepted anywhere in the cluster until a new primary with guaranteed consistency is established
+
+          - Architectural Trade-off: 
+            - This configuration explicitly prioritizes Consistency (C) and Partition Tolerance (P) over Availability (A).
+            - The trade-off is clear: during partitions, the system may become temporarily unavailable to maintain data consistency.
+            - The "why" behind this choice is that for certain applications, data correctness is non-negotiable, even if it means occasional downtime.
+      6. Justifying Configuration Choice for Business Requirements
+          - When to Choose Strong Consistency (CP Configuration)
+            - Business Requirement: Financial transactions, medical systems, legal compliance data, or any scenario where data accuracy has significant consequences.
+            - Justification: Choose strong consistency when the cost of data inconsistency exceeds the cost of temporary unavailability. For financial systems, incorrect balances could lead to regulatory penalties and loss of trust. The brief unavailability during failover is preferable to data corruption.
 
 2. Eventual Consistency:
     - Configure writes and reads for eventual consistency (w:1 for writes and default read concern in MongoDB).
@@ -435,6 +572,18 @@ The complete code for this lab is available at: https://github.com/zeli8888/COMP
           📊 Final document content: username_eventual_write
           ```
 
+      3. Executive Summary & Key Observations
+          - Stale Data Visibility: Initial reads from secondary nodes returned outdated data, confirming the presence of stale data during replication windows.
+
+          - Propagation Latency: The system demonstrated a 104ms replication delay, with data becoming consistent across all nodes after the second read attempt.
+
+          - Eventual Nature Proven: The retry loop successfully captured the transition from inconsistent to consistent state, validating the "eventual" guarantee.
+
+          - High Availability: Unlike strong consistency configurations, the system maintained continuous availability for both reads and writes throughout the experiment.
+      4. Detailed Analysis of Architectural Trade-offs
+      
+      5. Justifying Configuration Choice for Business Requirements
+
 3. Causal Consistency (Optional / Bonus):
     - design an experiment to demonstrate that causally related operations are observed in order, even if other concurrent operations are not.
       1. Run the Spring Boot application with consistency test:
@@ -452,6 +601,11 @@ The complete code for this lab is available at: https://github.com/zeli8888/COMP
           ✅ Causal consistency verified - related operations maintain order
           ```
 
+      3. Executive Summary & Key Observations
+      
+      4. Detailed Analysis of Architectural Trade-offs
+      
+      5. Justifying Configuration Choice for Business Requirements
 
 ## Distributed Transactions
 <!-- Detailed conceptual analysis of the e-commerce workflow, contrasting ACID with Saga patterns and their trade-offs. -->
