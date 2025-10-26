@@ -708,36 +708,36 @@
     - Analyze the trade-offs between these approaches in terms of consistency, complexity, fault tolerance, and performance. You do not need to implement this part; a detailed conceptual explanation is sufficient.
 
       1. Consistency Trade-offs
-        - ACID Transactions:
-          - Strong Consistency: All services see a consistent state at all times.
-          - Atomic Rollback: Failed transactions are rolled back atomically and immediately, leaving no side effects.
-          - Simplified Reasoning: Linear, predictable execution paths.
+          - ACID Transactions:
+            - Strong Consistency: All services see a consistent state at all times.
+            - Atomic Rollback: Failed transactions are rolled back atomically and immediately, leaving no side effects.
+            - Simplified Reasoning: Linear, predictable execution paths.
 
-        - Saga (Orchestrated):
-          - Eventual Consistency: Temporary inconsistencies during execution and even during rollback.
-          - Compensating Rollback: Rollback is achieved through a sequence of compensating transactions which are NOT atomic; there can be a window where only some compensations have completed.
-          - Complex Failure States: Must handle partial failures and compensation failures.
+          - Saga (Orchestrated):
+            - Eventual Consistency: Temporary inconsistencies during execution and even during rollback.
+            - Compensating Rollback: Rollback is achieved through a sequence of compensating transactions which are NOT atomic; there can be a window where only some compensations have completed.
+            - Complex Failure States: Must handle partial failures and compensation failures.
 
-        - Saga (Choreographed):
-          - Eventual Consistency: The most relaxed consistency model; temporary inconsistencies are common.
-          - Compensating Rollback: Rollback is event-driven and NOT atomic, relying on each service to independently trigger and complete its compensation.
-          - Complex Failure States: Must handle distributed partial failures and potential compensation failures across services.
+          - Saga (Choreographed):
+            - Eventual Consistency: The most relaxed consistency model; temporary inconsistencies are common.
+            - Compensating Rollback: Rollback is event-driven and NOT atomic, relying on each service to independently trigger and complete its compensation.
+            - Complex Failure States: Must handle distributed partial failures and potential compensation failures across services.
 
       2. Complexity Trade-offs
-        - ACID Transactions:
-          - Lower Business Logic Complexity: Simple commit/rollback semantics.
-          - Simplified Error Handling: Binary success/failure outcomes.
-          - Higher Infrastructure Complexity: Requires sophisticated distributed transaction managers to implement 2PC or similar protocols.
+          - ACID Transactions:
+            - Lower Business Logic Complexity: Simple commit/rollback semantics.
+            - Simplified Error Handling: Binary success/failure outcomes.
+            - Higher Infrastructure Complexity: Requires sophisticated distributed transaction managers to implement 2PC or similar protocols.
 
-        - Saga (Orchestrated):
-          - Higher Business Logic Complexity: Must design and test compensation logic within the orchestrator.
-          - Centralized Control: Simplifies monitoring and debugging but creates a single point failure of management.
-          - Lower Infrastructure Complexity: Leverages standard messaging, no complex transaction manager needed.
+          - Saga (Orchestrated):
+            - Higher Business Logic Complexity: Must design and test compensation logic within the orchestrator.
+            - Centralized Control: Simplifies monitoring and debugging but creates a single point failure of management.
+            - Lower Infrastructure Complexity: Leverages standard messaging, no complex transaction manager needed.
 
-        - Saga (Choreographed):
-          - Highest Business Logic Complexity: Must design, test, and distribute compensation logic across all services.
-          - Distributed Logic: Better decoupling but harder to debug, monitor, and reason about the overall flow.
-          - Highest Infrastructure Complexity: Requires robust, fault-tolerant message brokers and sophisticated service discovery. Managing dependencies becomes challenging as the number of services grows.
+          - Saga (Choreographed):
+            - Highest Business Logic Complexity: Must design, test, and distribute compensation logic across all services.
+            - Distributed Logic: Better decoupling but harder to debug, monitor, and reason about the overall flow.
+            - Highest Infrastructure Complexity: Requires robust, fault-tolerant message brokers and sophisticated service discovery. Managing dependencies becomes challenging as the number of services grows.
 
       3. Fault Tolerance Evaluation
           - ACID Transactions:
