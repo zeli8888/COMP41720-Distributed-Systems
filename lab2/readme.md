@@ -659,11 +659,15 @@
 
       5. Dependency Management: In choreography-based Sagas, the event-driven flow can become complex and difficult to manage as the number of services grows.
 
+      6. Failure Handling: In orchestrated-based Sagas, the orchestrator becomes a potential single point of failure, requiring robust fault-tolerance mechanisms.
+
 2. Conceptual Exercise: for a simple multi-service workflow (e-commerce order involving OrderService, PaymentService, InventoryService)
     - Describe how this workflow would be managed using: 
         1. ACID transactions (and why it's problematic in a truly distributed system).
 
-            - In a traditional ACID model, this workflow would be managed as a single distributed transaction spanning all three services. This would typically employ protocols like Two-Phase Commit (2PC) or Three-Phase Commit (3PC) to maintain atomicity across service boundaries.
+            - In a monolithic system, this workflow would be managed within a single database ACID transaction. 
+            - To achieve similar guarantees in a distributed system, one would implement it as a single distributed transaction spanning all three services, typically employing coordination protocols like Two-Phase Commit (2PC). 
+            - However, this approach is problematic due to the fundamental challenges of distributed systems, such as unreliable networks and latency, which make it difficult to maintain traditional ACID properties in practice.
             - Key Characteristics
               - Atomicity: All operations commit or rollback together
               - Consistency: Strong consistency guarantees throughout
@@ -704,26 +708,36 @@
     - Analyze the trade-offs between these approaches in terms of consistency, complexity, fault tolerance, and performance. You do not need to implement this part; a detailed conceptual explanation is sufficient.
 
       1. Consistency Trade-offs
-          - ACID Transactions:
-            - Strong Consistency: All services see consistent state at all times
-            - Immediate Rollback: Failed transactions leave no side effects
-            - Simplified Reasoning: Linear, predictable execution paths
-          - Saga Pattern:
-            - Eventual Consistency: Temporary inconsistencies during execution
-            - Compensation Latency: Rollback is asynchronous and may have delays
-            - Complex Failure States: Must handle partial failures and compensation failures
+        - ACID Transactions:
+          - Strong Consistency: All services see a consistent state at all times.
+          - Atomic Rollback: Failed transactions are rolled back atomically and immediately, leaving no side effects.
+          - Simplified Reasoning: Linear, predictable execution paths.
+
+        - Saga (Orchestrated):
+          - Eventual Consistency: Temporary inconsistencies during execution and even during rollback.
+          - Compensating Rollback: Rollback is achieved through a sequence of compensating transactions which are NOT atomic; there can be a window where only some compensations have completed.
+          - Complex Failure States: Must handle partial failures and compensation failures.
+
+        - Saga (Choreographed):
+          - Eventual Consistency: The most relaxed consistency model; temporary inconsistencies are common.
+          - Compensating Rollback: Rollback is event-driven and NOT atomic, relying on each service to independently trigger and complete its compensation.
+          - Complex Failure States: Must handle distributed partial failures and potential compensation failures across services.
+
       2. Complexity Trade-offs
-          - ACID Transactions:
-            - Lower Business Logic Complexity: Simple commit/rollback semantics
-            - Higher Infrastructure Complexity: Requires sophisticated distributed transaction managers
-            - Simplified Error Handling: Binary success/failure outcomes
-          - Saga Pattern:
-            - Higher Business Logic Complexity: Must design and test compensation logic
-            - Lower Infrastructure Complexity: Leverages existing messaging infrastructure
-            - Complex Error Recovery: Must handle compensation failures and idempotency
-          - Orchestrated vs. Choreographed Complexity:
-            - Orchestrated: Centralized control simplifies monitoring but creates single point of failure
-            - Choreographed: Better decoupling but harder to debug and monitor distributed logic
+        - ACID Transactions:
+          - Lower Business Logic Complexity: Simple commit/rollback semantics.
+          - Simplified Error Handling: Binary success/failure outcomes.
+          - Higher Infrastructure Complexity: Requires sophisticated distributed transaction managers to implement 2PC or similar protocols.
+
+        - Saga (Orchestrated):
+          - Higher Business Logic Complexity: Must design and test compensation logic within the orchestrator.
+          - Centralized Control: Simplifies monitoring and debugging but creates a single point failure of management.
+          - Lower Infrastructure Complexity: Leverages standard messaging, no complex transaction manager needed.
+
+        - Saga (Choreographed):
+          - Highest Business Logic Complexity: Must design, test, and distribute compensation logic across all services.
+          - Distributed Logic: Better decoupling but harder to debug, monitor, and reason about the overall flow.
+          - Highest Infrastructure Complexity: Requires robust, fault-tolerant message brokers and sophisticated service discovery. Managing dependencies becomes challenging as the number of services grows.
 
       3. Fault Tolerance Evaluation
           - ACID Transactions:
@@ -731,19 +745,29 @@
             - Recovery Challenges: In-doubt transactions require manual resolution
             - Cascading Failures: Performance issues in one service affect all participants
 
-          - Saga Pattern:
-            - Resilient Design: Individual service failures don't block entire system
-            - Graceful Degradation: Can operate partially while waiting for recovery
+          - Saga (Orchestrated):
+            - Resilient Design: Individual service failures don't block the entire system; the orchestrator can trigger compensation.
             - Recovery Automation: Built-in compensation mechanisms enable self-healing
+            - Orchestrator SPOF: The orchestrator itself can become a single point of failure.
+
+          - Saga (Choreographed):
+            - Highly Resilient Design: No single point of failure; services are fully decoupled.
+            - Graceful Degradation: Can operate partially while waiting for recovery.
+            - Complex Recovery: Must handle event duplication, lost events, and ensure compensation idempotency across all services.
+
       4. Performance Characteristics
           - ACID Transactions:
             - High Latency: Synchronous coordination and locking overhead
             - Poor Throughput: Limited by slowest participant service
             - Resource Intensive: Long-held locks and connections
-          - Saga Pattern:
+          - Saga (Orchestrated):
             - Better Responsiveness: Asynchronous execution improves user experience
-            - Higher Throughput: Parallel execution opportunities in choreographed approach
+            - Good Throughput: More efficient than ACID, but limited by orchestrator sequencing.
             - Resource Efficiency: Shorter-lived transactions and connections
+          - Saga (Choreographed):
+            - Best Responsiveness: Fully asynchronous and event-driven.
+            - Highest Throughput: Allows for parallel execution of steps.
+            - Optimal Resource Efficiency: shortest-lived locks.
           
       5. Strategic Considerations
           - Use ACID Transactions When:
@@ -752,9 +776,16 @@
             - Performance requirements permit synchronous coordination
             - Operational team has expertise in distributed transaction management
 
-          - Use Saga Pattern When:
-            - Services require autonomy and independent scalability
+          - Use Saga Orchestrated When:
+            - A clear, centralized view of the workflow is necessary.
+            - The business process involves complex conditional logic, compensation sequences, or human approval steps that benefit from centralized control.
+            - The need for straightforward monitoring, debugging, and business activity monitoring outweighs architectural decentralization.
             - Eventual consistency is acceptable for the business domain
+
+          - Use Saga Choreographed When:
+            - Maximum service autonomy and isolation are critical design objectives.
+            - Independent teams require full ownership of their service's logic and events, without external orchestration dependencies.
+            - Scalability and resilience are top priorities. The architecture must support flexible, evolutionary changes where services can be added or modified with minimal impact on existing components.
             - High availability and fault tolerance are critical requirements
             - System must remain responsive under partial failures
 
