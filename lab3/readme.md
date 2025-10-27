@@ -29,19 +29,33 @@ The distributed application consists of two main services:
 <!-- Detail your application components, Docker images, and Kubernetes deployment (including YAML manifests). Provide a clear
 diagram of your deployed system -->
 ## Simple Distributed Application
-- two services: a ClientService and a ServiceService
-- ServiceService has a basic endpoint that occasionally introduces simulated delays or failures to allow for testing resilience patterns
-- ClientService make synchronous HTTP REST calls to ServiceService
+- two services: a ClientService and a ServerService
+- ServerService has a basic endpoint that occasionally introduces simulated delays or failures to allow for testing resilience patterns
+- ClientService make synchronous HTTP REST calls to ServerService
 ## Kubernetes Deployment
-- Containerize both ClientService and ServiceService using Docker
+- Containerize both ClientService and ServerService using Docker
+```bash
+cd ClientService && mvn clean package && docker build -t clientservice .
+cd ../ServerService && mvn clean package && docker build -t serverservice .
+# Tag and push images to docker hub for Kubernetes to pull
+docker tag clientservice clientservice
+docker tag serverservice serverservice
+docker push clientservice && docker push serverservice
+```
 - Deploy application on a Kubernetes cluster, Kubernetes manifests:
-  - backend-deployment.yaml
-  - backend-service.yaml
-  - client-deployment.yaml
-  - client-service.yaml
+  - server.yaml
+  - client.yaml
+```bash
+minikube start && kubectl apply -f k8s/
+```
 ## Baseline Test
 - initial tests to confirm application functions correctly
-- Observation for the impact when the ServiceService fails or becomes slow without any resilience patterns in place (e.g., client blocking, timeouts, errors propagating directly)
+```bash
+# Access ClientService pod terminal
+kubectl exec -it $(kubectl get pod -l app=client -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
+# From within ClientService pod, send requests to ServerService
+```
+- Observation for the impact when the ServerService fails or becomes slow without any resilience patterns in place (e.g., client blocking, timeouts, errors propagating directly)
 
 
 
@@ -56,20 +70,20 @@ distributed systems principles like the CAP Theorem, availability, performance, 
 ## Part B: Implementing Resilience Patterns
 ### Circuit Breaker Implementation
 #### Configuration
-- Integrate a Circuit Breaker pattern into ClientService for calls made to the ServiceService
+- Integrate a Circuit Breaker pattern into ClientService for calls made to the ServerService
 - Configure the circuit breaker with parameters such as failure threshold, a duration to wait before attempting to half-open, and a maximum number of concurrent requests allowed when half-open.
 #### Experiment
-- Trigger enough failures (from ServiceService) to cause the circuit breaker to open. Observe the ClientService's behavior (e.g., fast failing, returning a fallback response, not even attempting the call).
+- Trigger enough failures (from ServerService) to cause the circuit breaker to open. Observe the ClientService's behavior (e.g., fast failing, returning a fallback response, not even attempting the call).
 - After the configured wait duration, observe the circuit breaker attempting to half-open and allowing a limited number of requests through.
 - Verify the circuit closes if successful calls resume, or re-opens if failures persist.
 - Document observations and analyze the trade-offs: How does the circuit breaker improve availability and protect the ClientService? What are the implications for data freshness or user experience?
 
 ### Retries with Exponential Backoff and Jitter
 #### Configuration
-- Implement retry logic with an exponential backoff strategy and jitter within your ClientService for calls to the ServiceService.
+- Implement retry logic with an exponential backoff strategy and jitter within your ClientService for calls to the ServerService.
 - This is used for transient failures that might resolve themselves.
 #### Experiment
-- Configure the ServiceService to return transient failures (e.g., HTTP 429 Too Many Requests, or intermittent 500s).
+- Configure the ServerService to return transient failures (e.g., HTTP 429 Too Many Requests, or intermittent 500s).
 - Observe the ClientService automatically retrying the requests with increasing delays
 - Demonstrate how jitter helps prevent a "thundering herd" problem of synchronized retries.
 - Document observations and analyze the trade-offs: When is this pattern appropriate versus a circuit breaker? What are the potential impacts on backend load, latency, and system stability?
@@ -77,8 +91,8 @@ distributed systems principles like the CAP Theorem, availability, performance, 
 ## Part C: Chaos Engineering Experiment
 ### Chaos Engineering Setup
 - Choose a chaos engineering tool - Chaos Toolkit
-- Define a chaos experiment targeting Kubernetes-deployed ServiceService
-- Recommended Experiment: Simulate a network partition that prevents communication between your ClientService and ServiceService, or a node failure/shutdown of the node running your ServiceService pod.
+- Define a chaos experiment targeting Kubernetes-deployed ServerService
+- Recommended Experiment: Simulate a network partition that prevents communication between your ClientService and ServerService, or a node failure/shutdown of the node running your ServerService pod.
 ### Execute & Observe
 - Execute the chaos experiment while your ClientService is active
 - Observe the system's behavior in detail, especially how your implemented resilience patterns react
