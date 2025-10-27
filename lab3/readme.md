@@ -38,9 +38,9 @@ diagram of your deployed system -->
 cd ClientService && mvn clean package && docker build -t clientservice .
 cd ../ServerService && mvn clean package && docker build -t serverservice .
 # Tag and push images to docker hub for Kubernetes to pull
-docker tag clientservice clientservice
-docker tag serverservice serverservice
-docker push clientservice && docker push serverservice
+docker tag clientservice zeli8888/clientservice
+docker tag serverservice zeli8888/serverservice
+docker push zeli8888/clientservice && docker push zeli8888/serverservice
 ```
 - Deploy application on a Kubernetes cluster, Kubernetes manifests:
   - server.yaml
