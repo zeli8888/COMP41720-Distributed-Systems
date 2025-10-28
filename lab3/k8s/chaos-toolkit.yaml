@@ -41,18 +41,13 @@ data:
           }
         },
         {
-          "type": "probe",
-          "name": "wait-for-server-recovery",
+          "type": "action",
+          "name": "wait-for-recovery",
           "provider": {
-            "type": "python",
-            "module": "chaosk8s.pod.probes",
-            "func": "pods_in_phase",
-            "arguments": {
-              "label_selector": "app=server",
-              "phase": "Running"
-            }
-          },
-          "tolerance": 1
+            "type": "process", 
+            "path": "sleep",
+            "arguments": "20"
+          }
         },
         {
           "type": "probe",
@@ -134,16 +129,12 @@ spec:
           pip install chaostoolkit-kubernetes chaostoolkit-lib
           echo "Starting chaos toolkit container..."
           sleep infinity
+        env:
+        - name: CHAOSTOOLKIT_IN_POD
+          value: "true"
         volumeMounts:
         - name: experiment-volume
           mountPath: /tmp/experiments
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
       volumes:
       - name: experiment-volume
         configMap:
