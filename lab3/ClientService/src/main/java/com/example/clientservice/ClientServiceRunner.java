@@ -4,35 +4,30 @@ import com.example.clientservice.client.ClientWithoutResilience;
 import com.example.clientservice.client.ClientResilience;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
-import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
 import java.util.Scanner;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class ClientServiceRunner implements CommandLineRunner {
-
-    @Value("${resilience4j.timelimiter.instances.serverService.timeoutDuration}")
-    private long timeoutDuration;
+    @Value("${timeout.connection.second}")
+    private int connectionTimeout;
+    @Value("${timeout.read.second}")
+    private int readTimeout;
     private final Scanner scanner;
     private final ClientWithoutResilience clientWithoutResilience;
     private final ClientResilience clientResilience;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final RetryRegistry retryRegistry;
-    private final TimeLimiterRegistry timeLimiterRegistry;
 
     public ClientServiceRunner(ClientWithoutResilience clientWithoutResilience, ClientResilience clientResilience,
-                               CircuitBreakerRegistry circuitBreakerRegistry, RetryRegistry retryRegistry, TimeLimiterRegistry timeLimiterRegistry) {
+                               CircuitBreakerRegistry circuitBreakerRegistry, RetryRegistry retryRegistry) {
         this.scanner = new Scanner(System.in);
         this.clientWithoutResilience = clientWithoutResilience;
         this.clientResilience = clientResilience;
         this.circuitBreakerRegistry = circuitBreakerRegistry;
         this.retryRegistry = retryRegistry;
-        this.timeLimiterRegistry = timeLimiterRegistry;
     }
 
     @Override
@@ -158,8 +153,7 @@ public class ClientServiceRunner implements CommandLineRunner {
     private void callHelloDelayEndpointWithResilience() {
         try {
             long delayMs = getDelayFromUser();
-            CompletableFuture<String> future = clientResilience.callHelloDelay(delayMs);
-            String response = future.get(timeoutDuration*2, TimeUnit.MILLISECONDS);
+            String response = clientResilience.callHelloDelay(delayMs);
             System.out.println("Response: " + response);
         } catch (Exception e) {
             System.err.println("Error with resilience: " + e.getClass().getSimpleName() + " - " + e.getMessage());
@@ -238,8 +232,6 @@ public class ClientServiceRunner implements CommandLineRunner {
                     circuitBreakerRegistry.circuitBreaker("serverService");
             io.github.resilience4j.retry.Retry retry =
                     retryRegistry.retry("serverService");
-            io.github.resilience4j.timelimiter.TimeLimiter timeLimiter =
-                    timeLimiterRegistry.timeLimiter("serverService");
             System.out.println("\n🔧 Resilience4j Detailed Status");
             System.out.println("Circuit Breaker:");
             System.out.println("  State: " + circuitBreaker.getState());
@@ -262,9 +254,9 @@ public class ClientServiceRunner implements CommandLineRunner {
             System.out.println("    • Successful (with retry): " + retryMetrics.getNumberOfSuccessfulCallsWithRetryAttempt());
             System.out.println("    • Failed (after retry): " + retryMetrics.getNumberOfFailedCallsWithRetryAttempt());
 
-            System.out.println("Time Limiter:");
-            System.out.println("  Timeout Duration: " + timeLimiter.getTimeLimiterConfig().getTimeoutDuration().toMillis() + "ms");
-            System.out.println("  Cancel Running Future: " + timeLimiter.getTimeLimiterConfig().shouldCancelRunningFuture());
+            System.out.println("Timeouts:");
+            System.out.println("  Connection Timeout: " + connectionTimeout + " seconds");
+            System.out.println("  Read Timeout: " + readTimeout + " seconds");
             System.out.println();
         } catch (Exception e) {
             System.out.println("❌ Error getting resilience status: " + e.getMessage());

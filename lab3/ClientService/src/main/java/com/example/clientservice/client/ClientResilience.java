@@ -22,9 +22,8 @@ public interface ClientResilience {
 
     @CircuitBreaker(name = "serverService")
     @Retry(name = "serverService")
-    @TimeLimiter(name = "serverService")
     @GetExchange("/hello-delay")
-    CompletableFuture<String> callHelloDelay(@RequestParam long delayMs);
+    String callHelloDelay(@RequestParam long delayMs);
 
     @CircuitBreaker(name = "serverService")
     @Retry(name = "serverService")
