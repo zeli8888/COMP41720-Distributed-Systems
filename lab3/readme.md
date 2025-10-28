@@ -46,7 +46,7 @@ docker push zeli8888/clientservice && docker push zeli8888/serverservice
   - server.yaml
   - client.yaml
 ```bash
-minikube start && && cd .. && kubectl apply -f k8s/
+minikube start && cd .. && kubectl apply -f k8s/
 ```
 ## Baseline Test
 - initial tests to confirm application functions correctly
