@@ -1,29 +1,38 @@
 package com.example.clientservice;
 
-import com.example.clientservice.client.Client;
+import com.example.clientservice.client.ClientWithoutResilience;
 import com.example.clientservice.client.ClientResilience;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
+import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class ClientServiceRunner implements CommandLineRunner {
 
-    private final Scanner scanner = new Scanner(System.in);
-    private final Client client;
+    @Value("${resilience4j.timelimiter.instances.serverService.timeoutDuration}")
+    private long timeoutDuration;
+    private final Scanner scanner;
+    private final ClientWithoutResilience clientWithoutResilience;
     private final ClientResilience clientResilience;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final RetryRegistry retryRegistry;
+    private final TimeLimiterRegistry timeLimiterRegistry;
 
-    public ClientServiceRunner(Client client, ClientResilience clientResilience,
-                               CircuitBreakerRegistry circuitBreakerRegistry, RetryRegistry retryRegistry) {
+    public ClientServiceRunner(ClientWithoutResilience clientWithoutResilience, ClientResilience clientResilience,
+                               CircuitBreakerRegistry circuitBreakerRegistry, RetryRegistry retryRegistry, TimeLimiterRegistry timeLimiterRegistry) {
+        this.scanner = new Scanner(System.in);
+        this.clientWithoutResilience = clientWithoutResilience;
         this.clientResilience = clientResilience;
         this.circuitBreakerRegistry = circuitBreakerRegistry;
         this.retryRegistry = retryRegistry;
-        this.client = client;
+        this.timeLimiterRegistry = timeLimiterRegistry;
     }
 
     @Override
@@ -32,9 +41,9 @@ public class ClientServiceRunner implements CommandLineRunner {
 
         while (true) {
             System.out.print("> ");
-            String input = scanner.nextLine().trim();
+            String input = scanner.nextLine().trim().toLowerCase();
 
-            switch (input.toLowerCase()) {
+            switch (input) {
                 case "exit":
                     scanner.close();
                     System.out.println("ClientService stopped.");
@@ -45,11 +54,9 @@ public class ClientServiceRunner implements CommandLineRunner {
                     break;
 
                 case "hello-fail":
-                    callHelloFailDelayEndpoint("hello-fail");
-                    break;
-
                 case "hello-delay":
-                    callHelloFailDelayEndpoint("hello-delay");
+                case "hello-chaos":
+                    callHelloSpecialEndpoint(input);
                     break;
 
                 case "status":
@@ -69,29 +76,47 @@ public class ClientServiceRunner implements CommandLineRunner {
 
     private void callHelloEndpoint() {
         try {
-            String response = client.callHello();
+            String response = clientWithoutResilience.callHello();
             System.out.println("Response: " + response);
         } catch (Exception e) {
             System.err.println("Error calling server: " + e.getMessage());
         }
     }
 
-    private void callHelloFailDelayEndpoint(String mode) {
+    private void callHelloSpecialEndpoint(String mode) {
         while (true) {
             System.out.print("Use resilience mechanisms? (yes/no): ");
             String input = scanner.nextLine().trim();
             if (input.equalsIgnoreCase("yes")) {
-                if (mode.equals("hello-fail")) {
-                    callHelloFailEndpointWithResilience();
-                } else {
-                    callHelloDelayEndpointWithResilience();
+                switch (mode) {
+                    case "hello-fail":
+                        callHelloFailEndpointWithResilience();
+                        break;
+                    case "hello-delay":
+                        callHelloDelayEndpointWithResilience();
+                        break;
+                    case "hello-chaos":
+                        callHelloChaosEndpointWithResilience();
+                        break;
+                    case "default":
+                        System.out.println("Unknown mode.");
+                        break;
                 }
                 break;
             } else if (input.equalsIgnoreCase("no")) {
-                if (mode.equals("hello-fail")) {
-                    callHelloFailEndpointWithoutResilience();
-                } else {
-                    callHelloDelayEndpointWithoutResilience();
+                switch (mode) {
+                    case "hello-fail":
+                        callHelloFailEndpointWithoutResilience();
+                        break;
+                    case "hello-delay":
+                        callHelloDelayEndpointWithoutResilience();
+                        break;
+                    case "hello-chaos":
+                        callHelloChaosEndpointWithoutResilience();
+                        break;
+                    case "default":
+                        System.out.println("Unknown mode.");
+                        break;
                 }
                 break;
             } else {
@@ -103,7 +128,7 @@ public class ClientServiceRunner implements CommandLineRunner {
     private void callHelloFailEndpointWithoutResilience() {
         try {
             boolean shouldFail = getShouldFailFromUser();
-            String response = client.callHelloFail(shouldFail);
+            String response = clientWithoutResilience.callHelloFail(shouldFail);
             System.out.println("Response: " + response);
         } catch (Exception e) {
             System.err.println("Error calling server: " + e.getMessage());
@@ -123,7 +148,7 @@ public class ClientServiceRunner implements CommandLineRunner {
     private void callHelloDelayEndpointWithoutResilience() {
         try {
             long delayMs = getDelayFromUser();
-            String response = client.callHelloDelay(delayMs);
+            String response = clientWithoutResilience.callHelloDelay(delayMs);
             System.out.println("Response: " + response);
         } catch (Exception e) {
             System.err.println("Error calling server: " + e.getMessage());
@@ -133,7 +158,28 @@ public class ClientServiceRunner implements CommandLineRunner {
     private void callHelloDelayEndpointWithResilience() {
         try {
             long delayMs = getDelayFromUser();
-            String response = clientResilience.callHelloDelay(delayMs);
+            CompletableFuture<String> future = clientResilience.callHelloDelay(delayMs);
+            String response = future.get(timeoutDuration*2, TimeUnit.MILLISECONDS);
+            System.out.println("Response: " + response);
+        } catch (Exception e) {
+            System.err.println("Error with resilience: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
+    }
+
+    private void callHelloChaosEndpointWithoutResilience() {
+        try {
+            int chaosPercent = getChaosPercentFromUser();
+            String response = clientWithoutResilience.callHelloChaos(chaosPercent);
+            System.out.println("Response: " + response);
+        } catch (Exception e) {
+            System.err.println("Error calling server: " + e.getMessage());
+        }
+    }
+
+    private void callHelloChaosEndpointWithResilience() {
+        try {
+            int chaosPercent = getChaosPercentFromUser();
+            String response = clientResilience.callHelloChaos(chaosPercent);
             System.out.println("Response: " + response);
         } catch (Exception e) {
             System.err.println("Error with resilience: " + e.getClass().getSimpleName() + " - " + e.getMessage());
@@ -169,14 +215,31 @@ public class ClientServiceRunner implements CommandLineRunner {
         }
     }
 
+    private int getChaosPercentFromUser() {
+        while (true) {
+            System.out.print("Enter chaos percent (0-100): ");
+            String input = scanner.nextLine().trim();
+            try {
+                int chaosPercent = Integer.parseInt(input);
+                if (chaosPercent < 0 || chaosPercent > 100) {
+                    System.out.println("Please enter a number between 0 and 100.");
+                } else {
+                    return chaosPercent;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+            }
+        }
+    }
+
     public void printDetailedResilienceStatus() {
         try {
-            System.out.println("\n🔧 Resilience4j Detailed Status");
-
             io.github.resilience4j.circuitbreaker.CircuitBreaker circuitBreaker =
                     circuitBreakerRegistry.circuitBreaker("serverService");
             io.github.resilience4j.retry.Retry retry =
                     retryRegistry.retry("serverService");
+            io.github.resilience4j.timelimiter.TimeLimiter timeLimiter =
+                    timeLimiterRegistry.timeLimiter("serverService");
             System.out.println("\n🔧 Resilience4j Detailed Status");
             System.out.println("Circuit Breaker:");
             System.out.println("  State: " + circuitBreaker.getState());
@@ -198,6 +261,10 @@ public class ClientServiceRunner implements CommandLineRunner {
             System.out.println("    • Successful (no retry): " + retryMetrics.getNumberOfSuccessfulCallsWithoutRetryAttempt());
             System.out.println("    • Successful (with retry): " + retryMetrics.getNumberOfSuccessfulCallsWithRetryAttempt());
             System.out.println("    • Failed (after retry): " + retryMetrics.getNumberOfFailedCallsWithRetryAttempt());
+
+            System.out.println("Time Limiter:");
+            System.out.println("  Timeout Duration: " + timeLimiter.getTimeLimiterConfig().getTimeoutDuration().toMillis() + "ms");
+            System.out.println("  Cancel Running Future: " + timeLimiter.getTimeLimiterConfig().shouldCancelRunningFuture());
             System.out.println();
         } catch (Exception e) {
             System.out.println("❌ Error getting resilience status: " + e.getMessage());
@@ -209,6 +276,7 @@ public class ClientServiceRunner implements CommandLineRunner {
         System.out.println("  hello  - Call the hello endpoint on the server");
         System.out.println("  hello-fail - Call the hello-fail endpoint on the server");
         System.out.println("  hello-delay - Call the hello-delay endpoint on the server");
+        System.out.println("  hello-chaos - Call the hello-chaos endpoint on the server");
         System.out.println("  status - Show detailed resilience status");
         System.out.println("  help   - Show this help message");
         System.out.println("  exit   - Stop the client service");

@@ -29,4 +29,13 @@ public class HelloController {
         Thread.sleep(delayMs);
         return "Hello from Server after delay of " + delayMs + " ms";
     }
+
+    @GetMapping("/hello-chaos")
+    public String helloChaos(@RequestParam("chaosPercent") int chaosPercent) {
+        int randomValue = (int) (Math.random() * 100);
+        if (randomValue < chaosPercent) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Simulated chaos failure");
+        }
+        return "Hello from Server with chaos percent of " + chaosPercent + "%";
+    }
 }

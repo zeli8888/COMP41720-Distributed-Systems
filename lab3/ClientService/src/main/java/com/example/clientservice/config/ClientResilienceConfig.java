@@ -1,6 +1,7 @@
 package com.example.clientservice.config;
 
 import com.example.clientservice.client.ClientResilience;
+import com.example.clientservice.client.ClientWithoutResilience;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +15,8 @@ public class ClientResilienceConfig {
     private String serverUrl;
 
     @Bean
-    public ClientResilience serverClient() {
-        // Create and return the proxy instance for ClientResilienceBase to enable Resilience4j annotations
+    public ClientResilience clientResilience() {
+        // Create and return the proxy instance for ClientResilience
         RestClient restClient = RestClient.builder()
                 .baseUrl(serverUrl)
                 .build();
@@ -23,5 +24,17 @@ public class ClientResilienceConfig {
         RestClientAdapter adapter = RestClientAdapter.create(restClient);
         HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(adapter).build();
         return factory.createClient(ClientResilience.class);
+    }
+
+    @Bean
+    public ClientWithoutResilience clientWithoutResilience() {
+        // Create and return the proxy instance for ClientWithoutResilience
+        RestClient restClient = RestClient.builder()
+                .baseUrl(serverUrl)
+                .build();
+
+        RestClientAdapter adapter = RestClientAdapter.create(restClient);
+        HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(adapter).build();
+        return factory.createClient(ClientWithoutResilience.class);
     }
 }
