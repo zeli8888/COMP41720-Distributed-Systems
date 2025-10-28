@@ -46,7 +46,7 @@ docker push zeli8888/clientservice && docker push zeli8888/serverservice
   - server.yaml
   - client.yaml
 ```bash
-minikube start && kubectl apply -f k8s/
+minikube start && && cd .. && kubectl apply -f k8s/
 ```
 ## Baseline Test
 - initial tests to confirm application functions correctly
@@ -80,7 +80,7 @@ distributed systems principles like the CAP Theorem, availability, performance, 
 
 ### Retries with Exponential Backoff and Jitter
 #### Configuration
-- Implement retry logic with an exponential backoff strategy and jitter within your ClientService for calls to the ServerService.
+- Implement retry logic with an exponential backoff strategy and jitter within ClientService for calls to the ServerService.
 - This is used for transient failures that might resolve themselves.
 #### Experiment
 - Configure the ServerService to return transient failures (e.g., HTTP 429 Too Many Requests, or intermittent 500s).
@@ -92,15 +92,18 @@ distributed systems principles like the CAP Theorem, availability, performance, 
 ### Chaos Engineering Setup
 - Choose a chaos engineering tool - Chaos Toolkit
 - Define a chaos experiment targeting Kubernetes-deployed ServerService
-- Recommended Experiment: Simulate a network partition that prevents communication between your ClientService and ServerService, or a node failure/shutdown of the node running your ServerService pod.
+- Recommended Experiment: Simulate a network partition that prevents communication between ClientService and ServerService, or a node failure/shutdown of the node running ServerService pod.
 ### Execute & Observe
-- Execute the chaos experiment while your ClientService is active
-- Observe the system's behavior in detail, especially how your implemented resilience patterns react
-- Collect metrics or logs from both services and the Kubernetes cluster to support your observations (e.g., circuit breaker state, retry counts, error rates, pod status).
+- Execute the chaos experiment while ClientService is active
+```bash
+kubectl exec -it deployment/chaos-toolkit -- chaos run /tmp/experiments/experiment.json
+```
+- Observe the system's behavior in detail, especially how implemented resilience patterns react
+- Collect metrics or logs from both services and the Kubernetes cluster to support observations (e.g., circuit breaker state, retry counts, error rates, pod status).
 ### Analysis & Justification
-- Compare the observed behavior to what you would expect without the resilience patterns (refer to your baseline test).
-- Provide a detailed architectural analysis of how the resilience patterns enabled your system to continue functioning (or fail gracefully) despite the injected fault.
-- Relate your findings back to architectural characteristics like availability, fault tolerance, and responsiveness. Justify why these patterns are crucial for robust distributed system design, considering their costs (e.g., complexity, potential for increased latency in some cases).
+- Compare the observed behavior to what should expect without the resilience patterns (refer to baseline test).
+- Provide a detailed architectural analysis of how the resilience patterns enabled system to continue functioning (or fail gracefully) despite the injected fault.
+- Relate findings back to architectural characteristics like availability, fault tolerance, and responsiveness. Justify why these patterns are crucial for robust distributed system design, considering their costs (e.g., complexity, potential for increased latency in some cases).
 
 
 

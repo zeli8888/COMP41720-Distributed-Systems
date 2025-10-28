@@ -1,3 +1,4 @@
+# chaos experiment configuration for chaos toolkit
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -18,7 +19,7 @@ data:
             "tolerance": 200,
             "provider": {
               "type": "http",
-              "url": "http://server-service:8080/hello",
+              "url": "http://server-service:8080/api/hello",
               "timeout": 5
             }
           }
@@ -58,7 +59,7 @@ data:
           "name": "verify-server-service-recovered",
           "provider": {
             "type": "http",
-            "url": "http://server-service:8080/hello",
+            "url": "http://server-service:8080/api/hello",
             "timeout": 5
           },
           "tolerance": 200
@@ -69,6 +70,7 @@ data:
 
     
 ---
+# Service Account offering identity for Chaos Toolkit
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -76,23 +78,19 @@ metadata:
 
 
 ---
+# Cluster Role with necessary permissions for Chaos Toolkit
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: chaos-cluster-role
 rules:
 - apiGroups: [""]
-  resources: ["pods", "services", "configmaps", "nodes"]
-  verbs: ["get", "list", "watch", "create", "delete"]
-- apiGroups: ["apps"]
-  resources: ["deployments", "replicasets"]
-  verbs: ["get", "list", "watch", "patch"]
-- apiGroups: ["networking.k8s.io"]
-  resources: ["networkpolicies"]
-  verbs: ["get", "list", "create", "delete"]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch", "delete"]
 
 
 ---
+# Bind the Service Account to the Cluster Role
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -108,6 +106,7 @@ roleRef:
 
 
 ---
+# Deployment for Chaos Toolkit
 apiVersion: apps/v1
 kind: Deployment
 metadata:
