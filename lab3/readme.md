@@ -52,8 +52,8 @@ minikube start && kubectl apply -f k8s/
 - initial tests to confirm application functions correctly
 ```bash
 # Access ClientService pod terminal
-kubectl exec -it $(kubectl get pod -l app=client -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
-# From within ClientService pod, send requests to ServerService
+kubectl exec -it $(kubectl get pod -l app=client -o jsonpath='{.items[0].metadata.name}') -- java -jar app.jar
+# Within ClientService pod, send requests to ServerService
 ```
 - Observation for the impact when the ServerService fails or becomes slow without any resilience patterns in place (e.g., client blocking, timeouts, errors propagating directly)
 
