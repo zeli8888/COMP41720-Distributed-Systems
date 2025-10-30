@@ -334,7 +334,7 @@ distributed systems principles like the CAP Theorem, availability, performance, 
 #### Configuration
 - Integrate a Circuit Breaker pattern into ClientService for calls made to the ServerService
 - Configure the circuit breaker with parameters such as failure threshold, a duration to wait before attempting to half-open, and a maximum number of concurrent requests allowed when half-open.
-    - Configuration
+    - Complete Configuration (Circuit Breaker, retry, timeout)
         ```properties
         # Resilience4j Circuit Breaker Configuration
         ## only consider closed calls in the sliding window
@@ -351,38 +351,32 @@ distributed systems principles like the CAP Theorem, availability, performance, 
         resilience4j.retry.instances.serverService.maxAttempts=4
         ## initial wait duration between retry attempts, 2s
         resilience4j.retry.instances.serverService.waitDuration=2000
-        ## enable exponential backoff strategy, with a multiplier of 2, 2s -> 4s -> 6s
+        ## enable exponential backoff strategy, with a multiplier of 2, 2s -> 4s -> 8s
         resilience4j.retry.instances.serverService.enableExponentialBackoff=true
         resilience4j.retry.instances.serverService.exponentialBackoffMultiplier=2
         ## enable Jitter to avoid thundering herd problem
         resilience4j.retry.instances.serverService.enableRandomizedWait=true
         ## factor to calculate the random wait duration
         ## e.g., 0.25 means 25% of the wait duration on the basis of exponential backoff
-        ## 2s(0.5s) ? 4s(1s) -> 6s(1.5s)
+        ## 2s(0.5s) -> 4s(1s) -> 8s(2s)
         resilience4j.retry.instances.serverService.randomizedWaitFactor=0.25
 
         # timeout for server calls
         timeout.connection.second=3
         timeout.read.second=3
         ```
-    - Explanation
+    - Explanation for Circuit Breaker and Timeout
         - Circuit Breaker Configuration:
             - Sliding Window: 10 recent calls determine circuit state
             - Failure Threshold: 50% - trips to OPEN after 5 failures in 10 calls
             - Recovery Timing: 5-second wait before attempting HALF-OPEN state
             - Testing Phase: 3 test calls allowed in HALF-OPEN to verify recovery
-        - Retry Configuration:
-            - Max Attempts: 4 total calls (1 initial + 3 retries)
-            - Backoff Strategy: Exponential with 2x multiplier (2s → 4s → 6s)
-            - Jitter: ±25% random variation to prevent synchronized retries
-            - Smart Delays: Progressive waiting with randomness for load distribution
         - Timeout Settings:
             - Connection Timeout: 3 seconds to establish connection
             - Read Timeout: 3 seconds to receive response
     - Protection Strategy:
         - Fast Failure: Circuit breaker prevents overwhelming failing services
-        - Transient Recovery: Retry handles temporary network issues
-        - Load Distribution: Jitter avoids retry storms and thundering herd
+        - Timeout: Connection and Read timeout prevents stuck resources and client blocking
 
 
 
@@ -666,60 +660,155 @@ distributed systems principles like the CAP Theorem, availability, performance, 
 #### Configuration
 - Implement retry logic with an exponential backoff strategy and jitter within ClientService for calls to the ServerService.
 - This is used for transient failures that might resolve themselves.
-    - Configuration
+    - Configuration for exponential backoff strategy and jitter
         ```properties
-        # Resilience4j Circuit Breaker Configuration
-        ## only consider closed calls in the sliding window
-        resilience4j.circuitbreaker.instances.serverService.slidingWindowSize=10
-        ## failure threshold in percentage
-        resilience4j.circuitbreaker.instances.serverService.failureRateThreshold=50
-        ## duration to wait before attempting to half-open
-        resilience4j.circuitbreaker.instances.serverService.waitDurationInOpenState=5000
-        ## maximum number of concurrent requests allowed when half-open
-        resilience4j.circuitbreaker.instances.serverService.permittedNumberOfCallsInHalfOpenState=3
-
         # Resilience4j Retry Configuration
         ## maximum number of retry attempts, including the initial call
         resilience4j.retry.instances.serverService.maxAttempts=4
         ## initial wait duration between retry attempts, 2s
         resilience4j.retry.instances.serverService.waitDuration=2000
-        ## enable exponential backoff strategy, with a multiplier of 2, 2s -> 4s -> 6s
+        ## enable exponential backoff strategy, with a multiplier of 2, 2s -> 4s -> 8s
         resilience4j.retry.instances.serverService.enableExponentialBackoff=true
         resilience4j.retry.instances.serverService.exponentialBackoffMultiplier=2
         ## enable Jitter to avoid thundering herd problem
         resilience4j.retry.instances.serverService.enableRandomizedWait=true
         ## factor to calculate the random wait duration
         ## e.g., 0.25 means 25% of the wait duration on the basis of exponential backoff
-        ## 2s(0.5s) ? 4s(1s) -> 6s(1.5s)
+        ## 2s(0.5s) -> 4s(1s) -> 8s(2s)
         resilience4j.retry.instances.serverService.randomizedWaitFactor=0.25
-
-        # timeout for server calls
-        timeout.connection.second=3
-        timeout.read.second=3
         ```
     - Explanation
-        - Circuit Breaker Configuration:
-            - Sliding Window: 10 recent calls determine circuit state
-            - Failure Threshold: 50% - trips to OPEN after 5 failures in 10 calls
-            - Recovery Timing: 5-second wait before attempting HALF-OPEN state
-            - Testing Phase: 3 test calls allowed in HALF-OPEN to verify recovery
         - Retry Configuration:
             - Max Attempts: 4 total calls (1 initial + 3 retries)
-            - Backoff Strategy: Exponential with 2x multiplier (2s → 4s → 6s)
+            - Backoff Strategy: Exponential with 2x multiplier (2s → 4s → 8s)
             - Jitter: ±25% random variation to prevent synchronized retries
             - Smart Delays: Progressive waiting with randomness for load distribution
-        - Timeout Settings:
-            - Connection Timeout: 3 seconds to establish connection
-            - Read Timeout: 3 seconds to receive response
     - Protection Strategy:
-        - Fast Failure: Circuit breaker prevents overwhelming failing services
         - Transient Recovery: Retry handles temporary network issues
         - Load Distribution: Jitter avoids retry storms and thundering herd
 #### Experiment
 - Configure the ServerService to return transient failures (e.g., HTTP 429 Too Many Requests, or intermittent 500s).
+  - ServerService endpoint that returns 503 service unavailable transient failure
+    ```java
+    @GetMapping("/hello-fail")
+    public String hello(@RequestParam("shouldFail") boolean shouldFail) {
+        System.out.println("Received request for /hello-fail with shouldFail: " + shouldFail + ", at " +
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")));
+        if (shouldFail) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Simulated failure");
+        }
+        return "Hello from Server";
+    }
+    ```
 - Observe the ClientService automatically retrying the requests with increasing delays
+  - Access ClientService pod terminal
+      ```bash
+      kubectl exec -it deployment/client -- java -jar app.jar
+      ```
+  - Within ClientService pod, send requests to ServerService with retry to test increasing delays
+      ```bash
+      ClientService started. Type 'help' for available commands, 'exit' to stop.
+      > hello-fail
+      Use resilience mechanisms? (yes/no): yes
+      Should the call fail? (yes/no): yes
+      Error with resilience: ServiceUnavailable - 503
+      > status
+      🔧 Resilience4j Detailed Status
+      Circuit Breaker:
+        State: CLOSED
+        Failure Rate Threshold: 50.0%
+        Sliding Window Size: 10
+        Permitted Calls in Half-Open: 3
+        Current Metrics:
+          • Total Calls: 4
+          • Successful: 0
+          • Failed: 4
+          • Current Failure Rate: -1.0%
+      Retry:
+        Max Attempts: 4
+        Current Metrics:
+          • Successful (no retry): 0
+          • Successful (with retry): 0
+          • Failed (after retry): 1
+      Timeouts:
+        Connection Timeout: 3 seconds
+        Read Timeout: 3 seconds
+      ```
+  - ServerService Logs
+      ```bash
+      Received request for /hello-fail with shouldFail: true, at 2025-10-29 23:09:22.596032
+      Received request for /hello-fail with shouldFail: true, at 2025-10-29 23:09:24.701448
+      Received request for /hello-fail with shouldFail: true, at 2025-10-29 23:09:28.387121
+      Received request for /hello-fail with shouldFail: true, at 2025-10-29 23:09:36.295393
+      ```
 - Demonstrate how jitter helps prevent a "thundering herd" problem of synchronized retries.
+  - Jitter-Enabled Load Distribution
+    - Randomized Spreading: ±25% variation prevents synchronized retry waves across multiple clients
+    - Traffic Smoothing: Instead of all clients retrying simultaneously at 2s, 4s, 8s, they retry within time windows
+    - Backend Protection: Server receives staggered requests rather than sudden traffic spikes
+  - Without Jitter Scenario Comparison
+    - Synchronized Storms: All failing clients would retry at identical intervals (exact 2s, 4s, 8s marks)
+    - Amplified Load: Server would experience traffic peaks worse than original failure load
+    - Cascading Collapse: Recovery attempts could overwhelm the recovering service
 - Document observations and analyze the trade-offs: When is this pattern appropriate versus a circuit breaker? What are the potential impacts on backend load, latency, and system stability?
+  - Observations of Retry Behavior with Transient Failures
+    - Exponential Backoff Pattern
+      - Increasing Delays: Server logs show retry intervals of ~2.1s, ~3.7s, ~7.9s demonstrating 2s → 4s → 8s progression with jitter
+      - Jitter Application: Intervals aren't exact multiples due to ±25% random variation (2.1s instead of 2s, 3.7s instead of 4s)
+      - Progressive Waiting: Each retry waits longer, giving ServerService more recovery time between attempts, showing an exponential backoff strategy
+    - Client Service Resilience Metrics
+      - Attempt Tracking: Retry metrics show 1 failed call after 4 total attempts (initial + 3 retries)
+      - Circuit Coordination: Failed retries were identified by Circuit breaker to decide state transition
+      - Failure Isolation: Single user request triggers multiple server attempts without cascading to other users
+  - Architectural Trade-offs: Retry vs Circuit Breaker
+    - When to Use Retry Pattern
+      - Transient Failures: Network timeouts, temporary resource constraints, brief unavailability
+      - Idempotent Operations: Safe to retry without side effects (GET requests, read operations)
+      - Low Latency Requirements: When users expect eventual success rather than immediate failure
+    - When to Use Circuit Breaker
+      - Persistent Failures: Service degradation lasting minutes or hours
+      - Resource Protection: When continued attempts could exhaust client resources
+      - Fast Failure Requirements: When quick user feedback is more important than eventual success
+  - Impact Analysis on System Components
+    - Backend Load Implications
+      - Controlled Amplification: 4 attempts per request increases load but in predictable, spaced manner
+      - Recovery Assistance: Graduated retry pattern gives backend breathing room to recover
+      - Load Calculation: With 1000 clients, retries could generate 4000 requests but spread over 14+ seconds
+    - Latency Trade-offs
+      - User-Perceived Latency: Requests may take up to 14 seconds (2+4+6+timeouts) but user sees single failure
+      - Progressive Delays: Each retry increases success probability while managing user experience
+      - Timeout Integration: 3-second timeouts prevent indefinite hanging on network issues
+    - System Stability Considerations
+      - Failure Containment: Retry limits (max 4 attempts) prevent infinite retry loops
+      - Resource Management: Exponential backoff conserves client threads and connections
+      - Graceful Degradation: System maintains functionality for successful operations while retrying failures
+  - Distributed Systems Principles Applied
+    - CAP Theorem Implications
+      - Availability Priority: Retries maintain service availability during transient partitions
+      - Consistency Sacrifice: During retry delays, system may serve stale data if fallbacks used
+      - Partition Tolerance: Designed to handle network issues without complete failure
+    - Performance and Fault Tolerance
+      - Exponential Backoff Principle with progressive waiting for recovery: waitDuration=2 → 4 → 8
+      - Load Distribution Principle to prevents synchronized retry storms: randomizedWaitFactor=0.25
+      - Failure Recovery Principle with bounded retries to prevent resource exhaustion: maxAttempts=4
+    - Availability vs Performance Balance
+      - High Availability: Multiple retry attempts increase success probability for transient issues
+      - Performance Cost: Additional latency and backend load during recovery periods
+      - Optimal Balance: Configuration chooses availability for short outages while limiting impact
+  - Strategic Implementation Guidelines
+    - Business Context Decision Framework
+      - E-commerce Checkout: Use aggressive retries (user expects order success)
+      - Social Media Feeds: Use conservative retries with circuit breaker (stale data acceptable)
+      - Financial Transactions: Use minimal retries with strong circuit breaking (data consistency critical)
+    - Failure Type Response Strategy
+      - HTTP 429 (Rate Limiting): Use retry with exponential backoff and jitter
+      - HTTP 503 (Service Unavailable): Combine retry with circuit breaker for persistent outages
+      - HTTP 500 (Server Errors): Limited retries with quick circuit breaker activation
+    - Load Management Strategy
+      - Peak Traffic Periods: Reduce retry attempts and increase jitter to protect backend
+      - Normal Operations: Standard retry configuration for optimal user experience
+      - Service Recovery: Gradual retry resumption as backend stabilizes
+
 
 ## Part C: Chaos Engineering Experiment
 ### Chaos Engineering Setup
