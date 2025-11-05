@@ -41,7 +41,7 @@ build/
 .idea
 
 ### Maven ###
-.mvn
+.mvn/
 mvnw
 mvnw.cmd
 
