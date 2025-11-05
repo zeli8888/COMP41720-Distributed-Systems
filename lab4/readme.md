@@ -51,3 +51,15 @@ Full observability with Grafana Stack:
 - Prometheus for metrics
 - Loki for logs  
 - Tempo for distributed tracing
+
+
+# To start
+## (Optional) Local Docker Compose Setup
+### Start all services
+```bash
+docker compose -p zeli-lab4 up -d
+```
+### clean up all services
+```bash
+docker compose -p zeli-lab4 down --rmi all
+```
