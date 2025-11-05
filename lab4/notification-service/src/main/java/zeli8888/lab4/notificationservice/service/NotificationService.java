@@ -8,7 +8,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.stereotype.Service;
-import zeli8888.lab4.notificationservice.model.event.OrderPlacedEvent;
+import zeli8888.lab4.orderservice.model.event.OrderPlacedEvent;
 
 @Service
 @RequiredArgsConstructor

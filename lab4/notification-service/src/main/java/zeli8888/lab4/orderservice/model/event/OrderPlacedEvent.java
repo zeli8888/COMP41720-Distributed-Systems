@@ -1,4 +1,4 @@
-package zeli8888.lab4.notificationservice.model.event;
+package zeli8888.lab4.orderservice.model.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
