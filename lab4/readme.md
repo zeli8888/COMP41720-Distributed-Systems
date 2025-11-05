@@ -55,6 +55,11 @@ Full observability with Grafana Stack:
 
 # To start
 ## (Optional) Local Docker Compose Setup
+### Create data directory and assign permissions
+```bash
+mkdir -p data/mongodb
+chown -R 999:999 ./data
+```
 ### Start all services
 ```bash
 docker compose -p zeli-lab4 up -d

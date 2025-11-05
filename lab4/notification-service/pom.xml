@@ -3,16 +3,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.7</version>
-        <relativePath/>
+        <groupId>zeli8888</groupId>
+        <artifactId>lab4</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>zeli8888</groupId>
-    <artifactId>lab4</artifactId>
+    <groupId>zeli8888.lab4</groupId>
+    <artifactId>notification-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>lab4</name>
-    <description>lab4</description>
+    <name>notification-service</name>
+    <description>notification-service</description>
     <url/>
     <licenses>
         <license/>
@@ -30,26 +29,36 @@
         <java.version>17</java.version>
     </properties>
     <dependencies>
+<!--        to enable json support (jackson) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
-    <packaging>pom</packaging>
-    
-    <modules>
-        <module>api-gateway</module>
-        <module>order-service</module>
-        <module>notification-service</module>
-    </modules>
-    
     <build>
         <plugins>
             <plugin>

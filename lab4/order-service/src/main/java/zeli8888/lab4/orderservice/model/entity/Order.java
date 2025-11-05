@@ -1,4 +1,4 @@
-package zeli8888.lab4.orderservice.model;
+package zeli8888.lab4.orderservice.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
