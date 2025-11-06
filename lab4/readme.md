@@ -5,19 +5,12 @@
 ```mermaid
 graph TB
     AG[API Gateway] -->|REST + Resilience| OS[Order Service]
+    AG[API Gateway] -->|REST + Resilience| IS[Inventory Service]
     OS -->|gRPC + Resilience| IS[Inventory Service]
     OS -->|Kafka Async| NS[Notification Service]
     
     OS --> MD[(MongoDB)]
     IS --> PD[(PostgreSQL)]
-    
-    PM[Prometheus] --> GM[Grafana]
-    LT[Loki] --> GM
-    TP[Tempo] --> GM
-    
-    OS -.-> PM
-    IS -.-> PM
-    NS -.-> PM
 ```
 
 ## Services
@@ -43,15 +36,6 @@ graph TB
 **MongoDB for Orders**: Document structure fits nested order items
 
 **PostgreSQL for Inventory**: Strong consistency for stock management
-
-## Monitoring
-
-Full observability with Grafana Stack:
-
-- Prometheus for metrics
-- Loki for logs  
-- Tempo for distributed tracing
-
 
 # To start
 ## (Optional) Local Docker Compose Setup
