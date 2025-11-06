@@ -1,5 +1,17 @@
 version: '4'
 services:
+  postgres:
+    image: postgres:17.6
+    container_name: inventory-postgres
+    environment:
+      POSTGRES_DB: inventory
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_inventory_data:/var/lib/postgresql/data
+
   mongodb:
     image: mongo:7.0.5
     container_name: mongodb-order
@@ -77,6 +89,12 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'true'
       
 volumes:
+  postgres_inventory_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data_volume/postgres-inventory/db
   mongodb_order_data:
     driver: local
     driver_opts:

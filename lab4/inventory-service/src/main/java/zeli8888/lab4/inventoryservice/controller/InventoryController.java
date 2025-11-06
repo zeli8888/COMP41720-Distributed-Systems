@@ -2,10 +2,10 @@ package zeli8888.lab4.inventoryservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import zeli8888.lab4.inventoryservice.model.dto.InventoryDTO;
 import zeli8888.lab4.inventoryservice.service.InventoryService;
 
 import java.util.Collection;
@@ -19,7 +19,13 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     @GetMapping
-    public ResponseEntity<List<Integer>> getInventory(Collection<String> skuCodes) {
+    public ResponseEntity<List<Integer>> getInventory(@RequestBody Collection<String> skuCodes) {
         return ResponseEntity.ok(inventoryService.getInventory(skuCodes));
+    }
+
+    @PostMapping
+    public ResponseEntity<String> createInventory(@RequestBody InventoryDTO inventoryDTO) {
+        inventoryService.createInventory(inventoryDTO.skuCode(), inventoryDTO.quantity());
+        return new ResponseEntity<>("Inventory created successfully", HttpStatus.CREATED);
     }
 }

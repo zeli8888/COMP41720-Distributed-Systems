@@ -28,4 +28,8 @@ public class InventoryService {
                 .map(Inventory::getQuantity)
                 .collect(Collectors.toList());
     }
+
+    public void createInventory(String skuCode, Integer quantity) {
+        inventoryRepository.save(new Inventory(null, skuCode, quantity));
+    }
 }

@@ -4,6 +4,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import zeli8888.lab4.grpc.InventoryServiceProto.*;
 import zeli8888.lab4.grpc.InventoryServiceGrpc;
@@ -13,6 +14,7 @@ import zeli8888.lab4.grpc.InventoryServiceGrpc;
 @Slf4j
 public class InventoryGrpcClient {
 
+    @GrpcClient("inventory-service")
     private InventoryServiceGrpc.InventoryServiceBlockingStub inventoryStub;
 
     public boolean checkAndReduceInventory(String skuCode, int quantity) {
