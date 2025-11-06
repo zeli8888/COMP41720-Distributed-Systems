@@ -1,0 +1,20 @@
+syntax = "proto3";
+package zeli8888.lab4.grpc;
+
+option java_package = "zeli8888.lab4.grpc";
+option java_outer_classname = "InventoryServiceProto";
+
+service InventoryService {
+  rpc CheckAndReduceInventory(InventoryRequest) returns (InventoryResponse);
+  rpc RestoreInventory(InventoryRequest) returns (InventoryResponse);
+}
+
+message InventoryRequest {
+  string sku_code = 1;
+  int32 quantity = 2;
+}
+
+message InventoryResponse {
+  bool success = 1;
+  string message = 2;
+}

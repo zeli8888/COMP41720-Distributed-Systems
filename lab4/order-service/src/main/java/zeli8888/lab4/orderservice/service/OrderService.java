@@ -6,7 +6,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import zeli8888.lab4.orderservice.model.dto.OrderRequest;
 import zeli8888.lab4.orderservice.model.entity.Order;
-import zeli8888.lab4.orderservice.model.event.OrderPlacedEvent;
+import zeli8888.lab4.events.OrderPlacedEvent;
 import zeli8888.lab4.orderservice.repository.OrderRepository;
 
 import java.math.BigDecimal;
