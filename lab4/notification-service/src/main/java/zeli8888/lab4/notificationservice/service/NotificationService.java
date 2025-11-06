@@ -23,8 +23,8 @@ public class NotificationService {
             // messageHelper holds the reference of mimeMessage, and modifies it conveniently
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage);
             messageHelper.setFrom("zelilab4@email.com");
-            messageHelper.setTo(orderPlacedEvent.getEmail());
-            messageHelper.setSubject(String.format("Your Order with OrderNumber %s is placed successfully", orderPlacedEvent.getOrderNumber()));
+            messageHelper.setTo(orderPlacedEvent.getEmail().toString());
+            messageHelper.setSubject(String.format("Your Order with OrderNumber %s is placed successfully", orderPlacedEvent.getOrderNumber().toString()));
             messageHelper.setText(String.format("""
                             Hi %s,%s
 
@@ -33,9 +33,9 @@ public class NotificationService {
                             Best Regards
                             Spring Shop
                             """,
-                    orderPlacedEvent.getFirstName(),
-                    orderPlacedEvent.getLastName(),
-                    orderPlacedEvent.getOrderNumber()));
+                    orderPlacedEvent.getFirstName().toString(),
+                    orderPlacedEvent.getLastName().toString(),
+                    orderPlacedEvent.getOrderNumber().toString()));
         };
         try {
             javaMailSender.send(messagePreparator);
