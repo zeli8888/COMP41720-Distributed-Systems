@@ -8,7 +8,7 @@ spring:
     gateway:
       server:
         webmvc:
-          ### spring cloud gateway has integration resilience4j circuit breaker and timeout, but not retry
+          ### spring cloud gateway has integration with resilience4j circuit breaker and timeout, but not retry
           ### using spring retry instead
           routes:
           - id: order_service
@@ -28,15 +28,16 @@ spring:
                 statuses: 500,502,503,504
                 series: SERVER_ERROR
                 backoff:
-                  ### initial wait duration between retry attempts, 2s
-                  firstBackoff: 2000ms
-                  maxBackoff: 8000ms
-                  ### enable exponential backoff strategy, with a multiplier of 2, 2s -> 4s -> 8s
+                  ### initial wait duration between retry attempts, 50ms
+                  firstBackoff: 50ms
+                  maxBackoff: 200ms
+                  ### enable exponential backoff strategy, with a multiplier of 2, 50ms -> 100ms -> 200ms
                   factor: 2
                   basedOnPreviousValue: false
-                ### e.g., 0.25 means 25% of the wait duration on the basis of exponential backoff, 2s(0.5s) -> 4s(1s) -> 8s(2s)
+                ### e.g., 0.25 means 25% of the wait duration on the basis of exponential backoff, 50ms(12.5ms) -> 100ms(25ms) -> 200ms(50ms)
                 jitter:
                   randomFactor: 0.25
+                timeout: 1000ms
 
           - id: inventory_service
             uri: http://localhost:8082
@@ -55,13 +56,13 @@ spring:
                   statuses: 500,502,503,504
                   series: SERVER_ERROR
                   backoff:
-                    ### initial wait duration between retry attempts, 2s
-                    firstBackoff: 2000ms
-                    maxBackoff: 8000ms
-                    ### enable exponential backoff strategy, with a multiplier of 2, 2s -> 4s -> 8s
+                    ### initial wait duration between retry attempts, 50ms
+                    firstBackoff: 50ms
+                    maxBackoff: 200ms
+                    ### enable exponential backoff strategy, with a multiplier of 2, 50ms -> 100ms -> 200ms
                     factor: 2
                     basedOnPreviousValue: false
-                  ### e.g., 0.25 means 25% of the wait duration on the basis of exponential backoff, 2s(0.5s) -> 4s(1s) -> 8s(2s)
+                  ### e.g., 0.25 means 25% of the wait duration on the basis of exponential backoff, 50ms(12.5ms) -> 100ms(25ms) -> 200ms(50ms)
                   jitter:
                     randomFactor: 0.25
 
@@ -82,7 +83,7 @@ resilience4j:
     configs:
       default:
         # timeout for server calls, larger timeout for additional retries
-        timeout-duration: 20s
+        timeout-duration: 5s
 
 # Explanation
 # In spring cloud gateway, multiple retry failures in one request will be considered as one failure in circuit breaker,
