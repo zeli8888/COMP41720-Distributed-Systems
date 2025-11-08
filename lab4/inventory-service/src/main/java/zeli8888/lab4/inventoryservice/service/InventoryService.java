@@ -30,6 +30,9 @@ public class InventoryService {
     }
 
     public void createInventory(String skuCode, Integer quantity) {
+        if (inventoryRepository.findBySkuCode(skuCode) != null) {
+            throw new RuntimeException("Inventory already exists");
+        }
         inventoryRepository.save(new Inventory(null, skuCode, quantity));
     }
 }

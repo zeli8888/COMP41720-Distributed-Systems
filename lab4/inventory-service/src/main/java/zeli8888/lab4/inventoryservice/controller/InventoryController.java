@@ -25,7 +25,11 @@ public class InventoryController {
 
     @PostMapping
     public ResponseEntity<String> createInventory(@RequestBody InventoryDTO inventoryDTO) {
-        inventoryService.createInventory(inventoryDTO.skuCode(), inventoryDTO.quantity());
-        return new ResponseEntity<>("Inventory created successfully", HttpStatus.CREATED);
+        try {
+            inventoryService.createInventory(inventoryDTO.skuCode(), inventoryDTO.quantity());
+            return new ResponseEntity<>("Inventory created successfully", HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Inventory creation failed", HttpStatus.CONFLICT);
+        }
     }
 }
