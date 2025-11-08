@@ -7,7 +7,7 @@ spring:
   cloud:
     gateway:
       server:
-        webmvc:
+        webflux:
           ### spring cloud gateway has integration with resilience4j circuit breaker and timeout, but not retry
           ### using spring retry instead
           routes:
@@ -18,15 +18,14 @@ spring:
             filters:
             - name: CircuitBreaker
               args:
-                id: orderServiceCircuitBreaker
+                name: orderServiceCircuitBreaker
                 fallbackUri: forward:/fallbackRoute
             - name: Retry
               args:
                 ### maximum number of retry attempts, excluding the initial call
                 retries: 3
+                statuses: INTERNAL_SERVER_ERROR
                 methods: GET,POST
-                statuses: 500,502,503,504
-                series: SERVER_ERROR
                 backoff:
                   ### initial wait duration between retry attempts, 50ms
                   firstBackoff: 50ms
@@ -46,15 +45,14 @@ spring:
             filters:
               - name: CircuitBreaker
                 args:
-                  id: inventoryServiceCircuitBreaker
+                  name: inventoryServiceCircuitBreaker
                   fallbackUri: forward:/fallbackRoute
               - name: Retry
                 args:
                   ### maximum number of retry attempts, excluding the initial call
                   retries: 3
+                  statuses: INTERNAL_SERVER_ERROR
                   methods: GET,POST
-                  statuses: 500,502,503,504
-                  series: SERVER_ERROR
                   backoff:
                     ### initial wait duration between retry attempts, 50ms
                     firstBackoff: 50ms
@@ -65,6 +63,7 @@ spring:
                   ### e.g., 0.25 means 25% of the wait duration on the basis of exponential backoff, 50ms(12.5ms) -> 100ms(25ms) -> 200ms(50ms)
                   jitter:
                     randomFactor: 0.25
+                  timeout: 1000ms
 
 # Resilience4j Circuit Breaker Configuration
 resilience4j:

@@ -30,6 +30,7 @@ public class OrderController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<List<OrderDTO>> getAllOrdersForUser(@PathVariable("userId") String userId) {
-        return new ResponseEntity<>(orderService.getAllOrdersForUser(userId), HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+//        return new ResponseEntity<>(orderService.getAllOrdersForUser(userId), HttpStatus.OK);
     }
 }
