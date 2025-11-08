@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import zeli8888.lab4.inventoryservice.model.Inventory;
 import zeli8888.lab4.inventoryservice.repository.InventoryRepository;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,9 +22,9 @@ public class InventoryService {
         return inventoryRepository.restoreInventory(skuCode, quantity) > 0;
     }
 
-    public List<Integer> getInventory(Collection<String> skuCodes) {
-        return inventoryRepository.findBySkuCodeIn(skuCodes).stream()
-                .map(Inventory::getQuantity)
+    public List<Integer> getInventory(List<String> skuCodes) {
+        return skuCodes.stream()
+                .map(skuCode -> inventoryRepository.findBySkuCode(skuCode).getQuantity())
                 .collect(Collectors.toList());
     }
 

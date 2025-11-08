@@ -19,7 +19,7 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     @GetMapping
-    public ResponseEntity<List<Integer>> getInventory(@RequestBody Collection<String> skuCodes) {
+    public ResponseEntity<List<Integer>> getInventory(@RequestBody List<String> skuCodes) {
         return ResponseEntity.ok(inventoryService.getInventory(skuCodes));
     }
 
