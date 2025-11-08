@@ -37,7 +37,6 @@ spring:
                 ### e.g., 0.25 means 25% of the wait duration on the basis of exponential backoff, 50ms(12.5ms) -> 100ms(25ms) -> 200ms(50ms)
                 jitter:
                   randomFactor: 0.25
-                timeout: 1000ms
 
           - id: inventory_service
             uri: http://localhost:8082
@@ -72,7 +71,7 @@ resilience4j:
     configs:
       default:
         # only consider closed calls in the sliding window
-        sliding-window-size: 3
+        sliding-window-size: 10
         # failure threshold in percentage
         failure-rate-threshold: 50
         # duration to wait before attempting to half-open
@@ -92,7 +91,7 @@ resilience4j:
 # and the timeout duration is for each retry.
 
 ## for debug only
-logging:
-  level:
-    org:
-      springframework: DEBUG
+#logging:
+#  level:
+#    org:
+#      springframework: DEBUG
