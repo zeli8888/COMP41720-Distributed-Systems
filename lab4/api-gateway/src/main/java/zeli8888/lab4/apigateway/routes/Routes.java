@@ -12,6 +12,7 @@ import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 import java.net.URI;
 
+import static org.springframework.cloud.gateway.server.mvc.filter.RetryFilterFunctions.retry;
 import static org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions.route;
 
 @Configuration
@@ -25,6 +26,7 @@ public class Routes {
     public RouterFunction<ServerResponse> orderServiceRoute() {
         return GatewayRouterFunctions.route("order_service")
                 .route(RequestPredicates.path("/api/order/**"), HandlerFunctions.http(orderServiceUrl))
+                .filter(retry(config -> config.setRetries(3)))
                 .filter(CircuitBreakerFilterFunctions.circuitBreaker("orderServiceCircuitBreaker",
                         URI.create("forward:/fallbackRoute")))
                 .build();

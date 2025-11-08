@@ -30,6 +30,11 @@ public class OrderController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<List<OrderDTO>> getAllOrdersForUser(@PathVariable("userId") String userId) {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         return new ResponseEntity<>(orderService.getAllOrdersForUser(userId), HttpStatus.OK);
     }
 }
