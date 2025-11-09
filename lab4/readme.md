@@ -6,8 +6,8 @@
 graph TB
     AG[API Gateway<br/>Port 9000] -->|REST + Resilience| OS[Order Service<br/>Port 8081]
     AG[API Gateway<br/>Port 9000] -->|REST + Resilience| IS[Inventory Service<br/>Port 8082]
-    OS -->|gRPC + Resilience| IS[Inventory Service<br/>Port 8082]
-    OS -->|Kafka Async| NS[Notification Service<br/>Port 8083]
+    OS -->|gRPC| IS[Inventory Service<br/>Port 8082]
+    OS -->|Kafka| NS[Notification Service<br/>Port 8083]
     
     OS --> MD[(MongoDB<br/>Port 5432)]
     IS --> PD[(PostgreSQL<br/>Port 27017)]
