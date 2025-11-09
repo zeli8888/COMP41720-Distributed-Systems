@@ -1,4 +1,4 @@
-version: '4'
+version: '3.8'
 services:
   postgres:
     image: postgres:17.6
@@ -11,10 +11,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_inventory_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inventory"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   mongodb:
     image: mongo:7.0.5
-    container_name: mongodb-order
+    container_name: order-mongodb
     ports:
       - "27017:27017"
     environment:
@@ -24,6 +30,12 @@ services:
     volumes:
       - mongodb_order_data:/data/db
       - mongodb_order_config:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   # manage cluster state(topic partition, broker state and message, etc.)
   zookeeper:
@@ -87,7 +99,68 @@ services:
       KAFKA_CLUSTERS_BOOTSTRAPSERVERS: broker:29092
       KAFKA_CLUSTERS_SCHEMAREGISTRY: http://schema-registry:8081
       DYNAMIC_CONFIG_ENABLED: 'true'
-      
+
+  # api-gateway
+  api-gateway:
+    image: zeli8888/lab4-api-gateway
+    container_name: api-gateway
+    ports:
+      - "9000:9000"
+    environment:
+      ORDER_SERVICE_URI: http://lab4-order-service:8081
+      INVENTORY_SERVICE_URI: http://lab4-inventory-service:8082
+
+  # order-service
+  order-service:
+    image: zeli8888/lab4-order-service
+    container_name: lab4-order-service
+    ports:
+      - "8081:8081"
+    environment:
+      INVENTORY_GRPC_URI: static://lab4-inventory-service:50051
+      ORDER_MONGODB_URI: mongodb://root:password@order-mongodb:27017/order-service?authSource=admin
+      KAFKA_BOOTSTRAP_SERVERS: broker:29092
+      KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      broker:
+        condition: service_started
+      schema-registry:
+        condition: service_started
+      zookeeper:
+        condition: service_started
+
+  # inventory-service
+  inventory-service:
+    image: zeli8888/lab4-inventory-service
+    container_name: lab4-inventory-service
+    ports:
+      - "8082:8082"
+    environment:
+      INVENTORY_POSTGRES_URL: jdbc:postgresql://inventory-postgres:5432/inventory
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # notification-service
+  notification-service:
+    image: zeli8888/lab4-notification-service
+    container_name: lab4-notification-service
+    ports:
+      - "8083:8083"
+    environment:
+      MAILTRAP_HOST: sandbox.smtp.mailtrap.io
+      MAILTRAP_PORT: 2525
+      MAILTRAP_USERNAME: 320507215fd1af
+      MAILTRAP_PASSWORD: fe0f5ce461f8b0
+      KAFKA_BOOTSTRAP_SERVERS: broker:29092
+      KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    depends_on:
+      - broker
+      - schema-registry
+      - zookeeper
+
 volumes:
   postgres_inventory_data:
     driver: local

@@ -12,7 +12,7 @@ spring:
           ### using spring retry instead
           routes:
           - id: order_service
-            uri: http://localhost:8081
+            uri: ${ORDER_SERVICE_URI:http://localhost:8081}
             predicates:
             - Path=/api/order/**
             filters:
@@ -40,7 +40,7 @@ spring:
                     randomFactor: 0.25
 
           - id: inventory_service
-            uri: http://localhost:8082
+            uri: ${INVENTORY_SERVICE_URI:http://localhost:8082}
             predicates:
               - Path=/api/inventory/**
             filters:
