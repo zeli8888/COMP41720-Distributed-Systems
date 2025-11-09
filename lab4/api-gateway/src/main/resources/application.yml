@@ -24,7 +24,8 @@ spring:
               args:
                 ### maximum number of retry attempts, excluding the initial call
                 retries: 3
-                methods: GET,POST
+                ### Only Idempotent requests
+                methods: GET,PUT,DELETE
                 statuses: 500,502,503,504
                 series: SERVER_ERROR
                 backoff:
@@ -51,7 +52,8 @@ spring:
                 args:
                   ### maximum number of retry attempts, excluding the initial call
                   retries: 3
-                  methods: GET,POST
+                  ### Only Idempotent requests
+                  methods: GET,PUT,DELETE
                   statuses: 500,502,503,504
                   series: SERVER_ERROR
                   backoff:
@@ -82,7 +84,7 @@ resilience4j:
     configs:
       default:
         # timeout for server calls, larger timeout for additional retries
-        timeout-duration: 5s
+        timeout-duration: 10s
 
 # Explanation
 # In spring cloud gateway, multiple retry failures in one request will be considered as one failure in circuit breaker,
