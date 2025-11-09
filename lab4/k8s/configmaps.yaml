@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: microservices-lab
+data:
+  # Kafka
+  KAFKA_BOOTSTRAP_SERVERS: "broker:29092"
+  KAFKA_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+  SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "broker:29092"
+
+  # communication
+  ORDER_SERVICE_URI: "http://order-service:8081"
+  INVENTORY_SERVICE_URI: "http://inventory-service:8082"
+  INVENTORY_GRPC_URI: "static://inventory-service:50051"
+
+  # database connection
+  INVENTORY_POSTGRES_URL: "jdbc:postgresql://postgres:5432/inventory"
+  ORDER_MONGODB_URI: "mongodb://root:password@mongodb:27017/order-service?authSource=admin"
+
+  # Mailtrap email config
+  MAILTRAP_HOST: "sandbox.smtp.mailtrap.io"
+  MAILTRAP_PORT: "2525"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-config
+  namespace: microservices-lab
+data:
+  KAFKA_BROKER_ID: "1"
+  KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+  KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker:29092,PLAINTEXT_HOST://broker:9092"
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+  ZOOKEEPER_CLIENT_PORT: "2181"
+  ZOOKEEPER_TICK_TIME: "2000"
+  SCHEMA_REGISTRY_HOST_NAME: "schema-registry"
+  SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
+  SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "broker:29092"

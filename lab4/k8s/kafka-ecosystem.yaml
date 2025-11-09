@@ -1,0 +1,214 @@
+# Zookeeper
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+  namespace: microservices-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: confluentinc/cp-zookeeper:7.5.0
+          ports:
+            - containerPort: 2181
+          env:
+            - name: ZOOKEEPER_CLIENT_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: ZOOKEEPER_CLIENT_PORT
+            - name: ZOOKEEPER_TICK_TIME
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: ZOOKEEPER_TICK_TIME
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper
+  namespace: microservices-lab
+spec:
+  selector:
+    app: zookeeper
+  ports:
+    - protocol: TCP
+      port: 2181
+      targetPort: 2181
+---
+# Kafka Broker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broker
+  namespace: microservices-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: broker
+  template:
+    metadata:
+      labels:
+        app: broker
+    spec:
+      containers:
+        - name: broker
+          image: confluentinc/cp-kafka:7.5.0
+          ports:
+            - containerPort: 9092
+            - containerPort: 29092
+          env:
+            - name: KAFKA_BROKER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: KAFKA_BROKER_ID
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: KAFKA_ZOOKEEPER_CONNECT
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+            - name: KAFKA_ADVERTISED_LISTENERS
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: KAFKA_ADVERTISED_LISTENERS
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker
+  namespace: microservices-lab
+spec:
+  selector:
+    app: broker
+  ports:
+    - name: external
+      protocol: TCP
+      port: 9092
+      targetPort: 9092
+    - name: internal
+      protocol: TCP
+      port: 29092
+      targetPort: 29092
+---
+# Schema Registry
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schema-registry
+  namespace: microservices-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: schema-registry
+  template:
+    metadata:
+      labels:
+        app: schema-registry
+    spec:
+      containers:
+        - name: schema-registry
+          image: confluentinc/cp-schema-registry:7.5.0
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SCHEMA_REGISTRY_HOST_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: SCHEMA_REGISTRY_HOST_NAME
+            - name: SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS
+            - name: SCHEMA_REGISTRY_LISTENERS
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: SCHEMA_REGISTRY_LISTENERS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: schema-registry
+  namespace: microservices-lab
+spec:
+  selector:
+    app: schema-registry
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+# Kafka UI
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-ui
+  namespace: microservices-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-ui
+  template:
+    metadata:
+      labels:
+        app: kafka-ui
+    spec:
+      containers:
+        - name: kafka-ui
+          image: provectuslabs/kafka-ui:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_CLUSTERS_NAME
+              value: "local"
+            - name: KAFKA_CLUSTERS_BOOTSTRAPSERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: KAFKA_CLUSTERS_SCHEMAREGISTRY
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: KAFKA_SCHEMA_REGISTRY_URL
+            - name: DYNAMIC_CONFIG_ENABLED
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ui
+  namespace: microservices-lab
+spec:
+  type: NodePort
+  selector:
+    app: kafka-ui
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30086
+      protocol: TCP

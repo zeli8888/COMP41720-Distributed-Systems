@@ -79,7 +79,6 @@ services:
     ports:
       - "8085:8081"
     environment:
-
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       # address to connect with kafka to persist schema information
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
