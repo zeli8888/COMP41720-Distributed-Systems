@@ -8,6 +8,7 @@ spec:
     storage: 2Gi
   accessModes:
     - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: postgres-storage
   hostPath:
     path: /data/postgres-inventory/db
@@ -35,6 +36,7 @@ spec:
     storage: 2Gi
   accessModes:
     - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: mongodb-data-storage
   hostPath:
     path: /data/mongodb-order/db
@@ -62,6 +64,7 @@ spec:
     storage: 1Gi
   accessModes:
     - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: mongodb-configdb-storage
   hostPath:
     path: /data/mongodb-order/configdb

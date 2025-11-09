@@ -38,6 +38,26 @@ graph TB
 **PostgreSQL for Inventory**: Strong consistency for stock management
 
 # To start
+## Run Cluster
+### Run k8s and deploy all services(needs to pull images, may take a while)
+```bash
+#cd k8s && ./deploy.sh && cd ..
+kubectl apply -f k8s/namespace.yaml && kubectl apply -f k8s/
+```
+### Start API gateway proxy
+```bash
+minikube service api-gateway -n microservices-lab
+```
+### Start Kafka UI proxy
+```bash
+minikube service kafka-ui -n microservices-lab
+```
+## CleanUp
+```bash
+#kubectl delete namespace microservices-lab
+kubectl delete -f k8s/
+```
+
 ## (Optional) For developer local test and setup using docker compose
 ## Skip this, if you are simply trying to run this project
 ### Build Images
