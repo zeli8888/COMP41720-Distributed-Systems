@@ -15,7 +15,7 @@ graph TB
 
 ## Services
 
-**API Gateway**: Routes requests to Order Service (REST + Resilience4j)
+**API Gateway**: Routes requests to Order and Inventory Services (REST + Resilience4j)
 
 **Order Service**: Processes orders, uses MongoDB for flexible order data
 
