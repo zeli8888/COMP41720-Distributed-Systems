@@ -7,7 +7,6 @@ import zeli8888.lab4.inventoryservice.model.Inventory;
 import zeli8888.lab4.inventoryservice.repository.InventoryRepository;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
