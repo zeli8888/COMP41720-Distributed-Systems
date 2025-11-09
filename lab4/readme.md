@@ -5,7 +5,7 @@
 ```mermaid
 graph TB
     AG[API Gateway<br/>Circuit Breaker & Retry & Timeout<br/>Port 9000] -->|REST| OS[Order Service<br/>Port 8081]
-    AG[API Gateway<br/>Port 9000] -->|REST| IS[Inventory Service<br/>Port 8082]
+    AG[API Gateway<br/>Circuit Breaker & Retry & Timeout<br/>Port 9000] -->|REST| IS[Inventory Service<br/>Port 8082]
     OS -->|gRPC| IS[Inventory Service<br/>Port 8082]
     OS -->|Kafka| NS[Notification Service<br/>Port 8083]
     
