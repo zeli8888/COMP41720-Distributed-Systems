@@ -38,7 +38,7 @@ graph TB
 **PostgreSQL for Inventory**: Strong consistency for stock management
 
 ## To start
-#### (Optional) Configure your Mailtrap to receive emails for Notification service
+#### (Optional) Configure your Mailtrap to receive emails from Notification service
 - register at https://mailtrap.io/
 - create a new sandbox project
 - replace mailtrap username and password at [k8s/secrets.yaml](k8s/secrets.yaml) with yours encoded with base64
