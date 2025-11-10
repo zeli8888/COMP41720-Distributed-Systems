@@ -158,7 +158,7 @@ spec:
   selector:
     app: schema-registry
   ports:
-    - port: 8081
+    - port: 8085
       targetPort: 8081
 ---
 # Kafka UI

@@ -41,7 +41,6 @@ graph TB
 ## Run Cluster
 ### Run k8s and deploy all services(needs to pull images, may take a while)
 ```bash
-#cd k8s && ./deploy.sh && cd ..
 kubectl apply -f k8s/namespace.yaml && kubectl apply -f k8s/
 ```
 ### Start API gateway proxy
@@ -54,7 +53,6 @@ minikube service kafka-ui -n microservices-lab
 ```
 ## CleanUp
 ```bash
-#kubectl delete namespace microservices-lab
 kubectl delete -f k8s/
 ```
 
