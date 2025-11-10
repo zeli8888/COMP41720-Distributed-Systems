@@ -115,20 +115,20 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: schema-registry
+  name: kafka-schema-registry
   namespace: microservices-lab
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: schema-registry
+      app: kafka-schema-registry
   template:
     metadata:
       labels:
-        app: schema-registry
+        app: kafka-schema-registry
     spec:
       containers:
-        - name: schema-registry
+        - name: kafka-schema-registry
           image: confluentinc/cp-schema-registry:7.5.0
           ports:
             - containerPort: 8081
@@ -152,11 +152,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: schema-registry
+  name: kafka-schema-registry
   namespace: microservices-lab
 spec:
   selector:
-    app: schema-registry
+    app: kafka-schema-registry
   ports:
     - port: 8085
       targetPort: 8081

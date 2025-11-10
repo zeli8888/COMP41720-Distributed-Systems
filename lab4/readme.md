@@ -38,16 +38,25 @@ graph TB
 **PostgreSQL for Inventory**: Strong consistency for stock management
 
 # To start
+## (Optional) Configure your Mailtrap to receive emails for Notification service
+- register at https://mailtrap.io/
+- create a new sandbox project
+- replace mailtrap username and password at [k8s/secrets.yaml](k8s/secrets.yaml) with yours
+- if you don't do this, emails will be sent to test inbox of my sandbox project
 ## Run Cluster
 ### Run k8s and deploy all services(needs to pull images, may take a while)
 ```bash
 kubectl apply -f k8s/namespace.yaml && kubectl apply -f k8s/
 ```
-### Start API gateway proxy
+### Wait for a while, until all services are ready
+```bash
+kubectl get pod -n microservices-lab
+```
+### Start API gateway proxy and send requests using Postman(or any other tools)
 ```bash
 minikube service api-gateway -n microservices-lab
 ```
-### Start Kafka UI proxy
+### Open a new terminal and Start Kafka UI proxy(cluster name: anything, bootstrap servers: broker:29092)
 ```bash
 minikube service kafka-ui -n microservices-lab
 ```
