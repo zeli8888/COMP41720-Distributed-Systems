@@ -37,41 +37,57 @@ graph TB
 
 **PostgreSQL for Inventory**: Strong consistency for stock management
 
-# To start
-## (Optional) Configure your Mailtrap to receive emails for Notification service
+## To start
+#### (Optional) Configure your Mailtrap to receive emails for Notification service
 - register at https://mailtrap.io/
 - create a new sandbox project
-- replace mailtrap username and password at [k8s/secrets.yaml](k8s/secrets.yaml) with yours
+- replace mailtrap username and password at [k8s/secrets.yaml](k8s/secrets.yaml) with yours encoded with base64
+    ```bash
+    # to encode with base64
+    echo -n "your_username_or_password" | base64
+    ```
 - if you don't do this, emails will be sent to test inbox of my sandbox project
-## Run Cluster
-### Run k8s and deploy all services(needs to pull images, may take a while)
+#### Run Cluster
+**Run k8s and deploy all services(needs to pull images, may take a while)**
 ```bash
 kubectl apply -f k8s/namespace.yaml && kubectl apply -f k8s/
 ```
-### Wait for a while, until all services are ready
+**Wait for a while, until all services are ready**
 ```bash
 kubectl get pod -n microservices-lab
 ```
-### Start API gateway proxy and send requests using Postman(or any other tools)
+**Start API gateway proxy and send requests using Postman(or any other tools)**
 ```bash
 minikube service api-gateway -n microservices-lab
 ```
-### Open a new terminal and Start Kafka UI proxy(cluster name: anything, bootstrap servers: broker:29092)
+**Open a new terminal and Start Kafka UI proxy(cluster name: anything, bootstrap servers: broker:29092)**
 ```bash
 minikube service kafka-ui -n microservices-lab
 ```
-## CleanUp
+#### CleanUp
 ```bash
 kubectl delete -f k8s/
 ```
+## Demo
+![run k8s](demo/demo1.png)
+![wait until all services are ready](demo/demo2.png)
+![start api gateway proxy](demo/demo3.png)
+![send post requests to inventory service through api gateway using Postman](demo/demo4.png)
+![send get requests to inventory service through api gateway using Postman](demo/demo5.png)
+![send post requests to order service through api gateway using Postman](demo/demo6.png)
+![send get requests to order service through api gateway using Postman](demo/demo7.png)
+![check email notification in sandbox project](demo/demo8.png)
+![start kafka ui proxy](demo/demo9.png)
+![connect with kafka ui](demo/demo10.png)
+![check messages in kafka ui](demo/demo11.png)
 
 ## (Optional) For developer local test and setup using docker compose
-## Skip this, if you are simply trying to run this project
-### Build Images
+#### Skip this, if you are simply trying to run this project
+**Build Images**
 ```bash
 $ export DOCKER_ACCOUNT=YOUR_DOCKER_ACCOUNT && export DOCKER_PASSWORD=YOUR_DOCKER_PASSWORD && mvn spring-boot:build-image -DskipTests
 ```
-### Start all services
+**Start all services**
 ```bash
 docker compose -p zeli-lab4 up -d
 ```

@@ -7,8 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import zeli8888.lab4.inventoryservice.model.dto.InventoryDTO;
 import zeli8888.lab4.inventoryservice.service.InventoryService;
-
-import java.util.Collection;
 import java.util.List;
 
 @RestController
